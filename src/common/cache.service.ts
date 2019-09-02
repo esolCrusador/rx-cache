@@ -4,11 +4,10 @@ import { EntityCacheService } from './entity-cache.service';
 import { IEntityCacheService } from './i-entity-cache.service';
 import { ICacheOptions } from '../contract/i-cache.options';
 import { ICacheService } from '../contract/i-cache.service';
-import { IMap } from '@nimbus-library/features/shared/models/i-map';
 
 @Injectable({ providedIn: 'root' })
 export class CacheService {
-  private readonly entityCaches: IMap<object>;
+  private readonly entityCaches: { [entityName: string]: IEntityCacheService<any> };
 
   constructor(
     @Inject(NgCacheService) private readonly ngCacheService: ICacheService
@@ -17,7 +16,7 @@ export class CacheService {
   }
 
   public for<TEntity>(entityName: string, options: ICacheOptions): IEntityCacheService<TEntity> {
-    let existingCache = this.entityCaches[entityName] as EntityCacheService<TEntity>;
+    let existingCache = this.entityCaches[entityName] as IEntityCacheService<TEntity>;
     if (existingCache) {
       if (!existingCache.areOptionsSame(options)) {
         throw new Error(`The otpions for entity cache ${entityName} were changed`);

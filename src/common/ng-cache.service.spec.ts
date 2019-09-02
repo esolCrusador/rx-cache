@@ -1,15 +1,15 @@
 import { NgCacheService } from './ng-cache.service';
 import { CacheStoragesEnum } from '../contract/cache-storages.enum';
-import { ILogger } from '../../logger/i-logger';
 import * as moment from 'moment';
 import { CacheMemoryStorage } from './storage/memory/cache-memory.service';
+import { ICacheLogger } from './i-cache-logger';
 
 describe('NgCacheService', () => {
   let ngCacheService: NgCacheService;
-  let logger: jasmine.SpyObj<ILogger>;
+  let logger: jasmine.SpyObj<ICacheLogger>;
 
   beforeEach(() => {
-    logger = jasmine.createSpyObj<ILogger>('Logger', ['error']);
+    logger = jasmine.createSpyObj<ICacheLogger>('Logger', ['error']);
 
     ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'Browser', logger);
   });

@@ -9,10 +9,10 @@ import { CacheLocalStorage } from './storage/local-storage/cache-local-storage.s
 import { CacheMemoryStorage } from './storage/memory/cache-memory.service';
 import { IStorageValue } from '../contract/i-storage-value';
 import { CacheConfiguration } from './cache.configuration';
-import { ILogger } from '../../logger/i-logger';
 import { INgCacheStoreOptions } from '../contract/i-ng-cache-store-options';
 import { ICacheValueInfo } from '../contract/i-cache-value-info';
 import { ITagsMap } from '../contract/i-tags-map';
+import { ICacheLogger, I_CACHE_LOGGER } from './i-cache-logger';
 
 const CACHE_PREFIX = 'CacheService';
 const DEFAULT_ENABLED_STORAGE = CacheStoragesEnum.MEMORY;
@@ -40,7 +40,7 @@ export class NgCacheService implements ICacheService {
   public constructor(
     storageTypes: CacheConfiguration,
     @Inject(PLATFORM_ID) private readonly platformId: Object,
-    private readonly logger: ILogger
+    @Inject(I_CACHE_LOGGER) private readonly logger: ICacheLogger
   ) {
     if (!storageTypes || storageTypes.length < 1) {
       throw new Error('Please specify storage types');
@@ -483,7 +483,7 @@ export class NgCacheService implements ICacheService {
 
       try {
         this.mainStorage.setItem(this.bigObjectsKey(), []);
-      } catch{ }
+      } catch { }
 
       isEnabled = this.mainStorage.isEnabled(true);
       if (!isEnabled) {

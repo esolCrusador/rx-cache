@@ -1,14 +1,17 @@
 import { CacheService } from './cache.service';
 import { NgCacheService } from './ng-cache.service';
 import { CacheStoragesEnum } from '../contract/cache-storages.enum';
-import { ILogger } from '../../logger/i-logger';
 import { ICacheOptions } from '../contract/i-cache.options';
 import { IEntityCacheService } from './i-entity-cache.service';
 import { Subject, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as moment from 'moment';
-import { MultipleDoneByCategory } from '@nimbus-library/tests/extensions/multiple-done-by-category';
-import { IMap } from '@nimbus-library/features/shared/models/i-map';
+import { ICacheLogger } from './i-cache-logger';
+import { MultipleDoneByCategory } from '@cache/tests/multiple-done-by-category';
+
+interface IMap<TEntity> {
+  [key: string]: TEntity;
+}
 
 describe('EntityCacheService', () => {
   interface TestEntity {
@@ -45,7 +48,7 @@ describe('EntityCacheService', () => {
     }
   };
 
-  let logger: jasmine.SpyObj<ILogger>;
+  let logger: jasmine.SpyObj<ICacheLogger>;
   let cacheService: CacheService;
   let entityCacheService: IEntityCacheService<TestEntity>;
 
@@ -54,7 +57,7 @@ describe('EntityCacheService', () => {
   }
 
   beforeEach(() => {
-    logger = jasmine.createSpyObj<ILogger>('Logger', ['error']);
+    logger = jasmine.createSpyObj<ICacheLogger>('Logger', ['error']);
     cacheService = new CacheService(new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger));
   });
 

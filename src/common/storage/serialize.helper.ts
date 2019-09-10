@@ -13,7 +13,7 @@ export class SerializeHelper {
     return `${separator1}${targetValue}(${Math.ceil(values.length / (targetValue.length + 1))})${isEnding ? '' : ','}${separator2}`;
   }
   private static getReplaceRegexp(targetValue: string): RegExp {
-    return new RegExp(`([^${targetValue}])((${targetValue},){3,}${targetValue}?)([^${targetValue}])`, 'g');
+    return new RegExp(`([^${targetValue}])((${targetValue},){3,}(${targetValue})?)([^${targetValue}])`, 'g');
   }
 
   public static serialize<TEntity>(obj: TEntity): string {
@@ -23,10 +23,10 @@ export class SerializeHelper {
     }
 
     return objStr.replace(SerializeHelper.keyCleanupRegexp, (f, g) => `${g}:`)
-      .replace(SerializeHelper.zeroReplaceRegexp, (_f, separator1, zeroes, _g, separator2) => {
+      .replace(SerializeHelper.zeroReplaceRegexp, (_f, separator1, zeroes, _g, _m, separator2) => {
         return SerializeHelper.replaceRounds(separator1, zeroes, separator2, '0');
       })
-      .replace(SerializeHelper.zeroTimeReplaceRegexp, (_f, separator1, zeroes, _g, separator2) => {
+      .replace(SerializeHelper.zeroTimeReplaceRegexp, (_f, separator1, zeroes, _g, _m, separator2) => {
         return SerializeHelper.replaceRounds(separator1, zeroes, separator2, '"00:00:00"');
       });
   }

@@ -29,7 +29,8 @@ describe('SerializeHelper', () => {
 
   describe('deserialize', () => {
     const twoSidesTestCases: any[] = [
-      {'dasedas-21`': '31231231', 'dsadsadsa': '"qwdqweqw": 131wdas', 'dcsdfsd:': '5552:23"3213": 321'}
+      {'dasedas-21`': '31231231', 'dsadsadsa': '"qwdqweqw": 131wdas', 'dcsdfsd:': '5552:23"3213": 321'},
+      [1, 2, 3, '00:00:00', '00:00:00.03212', '00:00:00', '00:00:00', '00:00:00', '00:00:00', 3, 3, '00:00:00', '00:00:00', '00:00:00', '00:00:00', '00:00:00', '00:00:00', '00:00:00.53212'],
     ];
 
     for (const testCase of twoSidesTestCases.concat(testCases.map(tc => tc.testData))) {

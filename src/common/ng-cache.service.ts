@@ -232,7 +232,7 @@ export class NgCacheService implements ICacheService {
         for (const valueKey of tagValues) {
           const value = this.getItem<IStorageValue<any>>(valueKey);
 
-          tagsAgg[valueKey] = value.options && (value.options.preloadExpires || value.options.cacheExpires) || 0;
+          tagsAgg[valueKey] = value && value.options && (value.options.preloadExpires || value.options.cacheExpires) || 0;
         }
 
         return tagsAgg;

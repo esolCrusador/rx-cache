@@ -1,4 +1,3 @@
-
 import { CacheStorageAbstract } from '../cache-storage-abstract.service';
 import { CacheStoragesEnum } from '../../../contract/cache-storages.enum';
 import { SerializeHelper } from '../serialize.helper';
@@ -35,13 +34,21 @@ export class CacheLocalStorage extends CacheStorageAbstract {
   public removeItem(key: string) {
     try {
       localStorage.removeItem(key);
-    } catch { }
+    } catch {}
   }
 
   public clear() {
     try {
       localStorage.clear();
-    } catch { }
+    } catch {}
+  }
+
+  public length() {
+    return localStorage.length;
+  }
+
+  public key(index: number) {
+    return localStorage.key(index);
   }
 
   public type() {

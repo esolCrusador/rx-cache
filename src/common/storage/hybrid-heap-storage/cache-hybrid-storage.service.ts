@@ -10,8 +10,9 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   private _data: { [key: string]: any } = {};
 
   private removedItems = [];
+  private hasChanges: boolean = false;
 
-  constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 30000) {
+  constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 1000) {
     super();
     this._data = this.load();
     setInterval(() => {
@@ -24,6 +25,7 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   }
 
   public setItem<TItem>(key: string, value: TItem): number | false {
+    this.hasChanges = this.hasChanges || !_.isEqual(this._data[key], value);
     this._data[key] = value;
     return 1;
   }
@@ -42,7 +44,7 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   }
 
   public isEnabled(check?: boolean) {
-    return true;
+    return this.persistentStorage.isEnabled(check);
   }
 
   public length() {
@@ -58,8 +60,11 @@ export class CacheHybridStorage extends CacheStorageAbstract {
     const data = _.cloneDeep(this._data);
     this.cleanUpPersistentStorage();
 
-    for (const key of Object.keys(data)) {
-      this.persistentStorage.setItem(key, data[key]);
+    if (this.hasChanges) {
+      this.hasChanges = false;
+      for (const key of Object.keys(data)) {
+        this.persistentStorage.setItem(key, data[key]);
+      }
     }
   }
 

@@ -324,7 +324,7 @@ export class NgCacheService implements ICacheService {
         break;
       }
       case CacheStoragesEnum.HYBRID: {
-        mainStorage = new CacheHybridStorage(CACHE_PREFIX, new CacheLocalStorage(), 5000);
+        mainStorage = new CacheHybridStorage(CACHE_PREFIX, new CacheLocalStorage(), 1000);
         break;
       }
       default: {

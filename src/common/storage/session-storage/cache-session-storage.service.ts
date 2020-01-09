@@ -34,13 +34,13 @@ export class CacheSessionStorage extends CacheStorageAbstract {
   public removeItem(key: string) {
     try {
       sessionStorage.removeItem(key);
-    } catch { }
+    } catch {}
   }
 
   public clear() {
     try {
       sessionStorage.clear();
-    } catch { }
+    } catch {}
   }
 
   public type() {
@@ -66,5 +66,13 @@ export class CacheSessionStorage extends CacheStorageAbstract {
     }
 
     return this.isEnabledValue;
+  }
+
+  public length() {
+    return sessionStorage.length;
+  }
+
+  public key(index: number) {
+    return sessionStorage.key(index);
   }
 }

@@ -5,13 +5,11 @@ import { CacheConfiguration } from '../common/cache.configuration';
 import { I_CACHE_LOGGER } from '@cache/common/i-cache-logger';
 
 @NgModule({
-  imports: [
-    CacheModule,
-  ],
+  imports: [CacheModule],
   providers: [
     {
       provide: CacheConfiguration,
-      useValue: new CacheConfiguration(CacheStoragesEnum.LOCAL_STORAGE, CacheStoragesEnum.SESSION_STORAGE, CacheStoragesEnum.MEMORY),
+      useValue: new CacheConfiguration(CacheStoragesEnum.HYBRID, CacheStoragesEnum.SESSION_STORAGE, CacheStoragesEnum.MEMORY),
     },
   ],
 })
@@ -19,7 +17,7 @@ export class NgCacheBrowserModule {
   public static forRoot(loggerType: any): ModuleWithProviders {
     return {
       ngModule: NgCacheBrowserModule,
-      providers: [{ provide: I_CACHE_LOGGER, useExisting: loggerType }]
+      providers: [{ provide: I_CACHE_LOGGER, useExisting: loggerType }],
     };
   }
 }

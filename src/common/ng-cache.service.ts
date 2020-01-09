@@ -13,6 +13,7 @@ import { INgCacheStoreOptions } from '../contract/i-ng-cache-store-options';
 import { ICacheValueInfo } from '../contract/i-cache-value-info';
 import { ITagsMap } from '../contract/i-tags-map';
 import { ICacheLogger, I_CACHE_LOGGER } from './i-cache-logger';
+import { CacheHybridStorage } from '@cache/common/storage/hybrid-heap-storage/cache-hybrid-storage.service';
 
 const CACHE_PREFIX = 'CacheService';
 const DEFAULT_ENABLED_STORAGE = CacheStoragesEnum.MEMORY;
@@ -20,28 +21,24 @@ const DEFAULT_ENABLED_STORAGE = CacheStoragesEnum.MEMORY;
 @Injectable({ providedIn: 'root' })
 export class NgCacheService implements ICacheService {
   /**
-     * Default cache options
-     * @type CacheOptionsInterface
-     * @private
-     */
+   * Default cache options
+   * @type CacheOptionsInterface
+   * @private
+   */
   private defaultOptions: INgCacheStoreOptions = {
     cacheExpires: 0,
     preloadExpires: Number.MAX_VALUE,
   };
 
   /**
-       * Cache prefix
-       */
+   * Cache prefix
+   */
   private prefix: string = CACHE_PREFIX;
 
   private mainStorage: CacheStorageAbstract;
   private readonly fallbackStorageTypes: CacheStoragesEnum[];
 
-  public constructor(
-    storageTypes: CacheConfiguration,
-    @Inject(PLATFORM_ID) private readonly platformId: Object,
-    @Inject(I_CACHE_LOGGER) private readonly logger: ICacheLogger
-  ) {
+  public constructor(storageTypes: CacheConfiguration, @Inject(PLATFORM_ID) private readonly platformId: Object, @Inject(I_CACHE_LOGGER) private readonly logger: ICacheLogger) {
     if (!storageTypes || storageTypes.length < 1) {
       throw new Error('Please specify storage types');
     }
@@ -71,11 +68,11 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Set data to cache
-       * @param key
-       * @param value
-       * @param options
-       */
+   * Set data to cache
+   * @param key
+   * @param value
+   * @param options
+   */
   public set(key: string, value: any, options?: INgCacheOptions): boolean {
     if (!this.isEnabled()) {
       return false;
@@ -92,7 +89,7 @@ export class NgCacheService implements ICacheService {
     if (!this.isSystemKey(key) && options.tag) {
       this.saveTag(options.tag, storageKey);
     }
-    if (itemLength > 1000 && (!options || !options.cacheExpires && !options.cacheMaxAge)) {
+    if (itemLength > 1000 && (!options || (!options.cacheExpires && !options.cacheMaxAge))) {
       this.saveBigObjectKey(key);
     }
 
@@ -120,15 +117,15 @@ export class NgCacheService implements ICacheService {
     return {
       value: retrive && storageValue.value ? retrive(storageValue.value) : storageValue.value,
       validForCache: validForCache,
-      validForPreload: validForPreload
+      validForPreload: validForPreload,
     };
   }
 
   /**
-       * Get data from cache
-       * @param key
-       * @returns {TEntity}
-       */
+   * Get data from cache
+   * @param key
+   * @returns {TEntity}
+   */
   public getCache<TEntity>(key: string, retrive?: (entity: TEntity) => TEntity): TEntity | undefined {
     const cacheValueInfo = this.getCacheValueInfo(key, retrive);
     if (cacheValueInfo === undefined || !cacheValueInfo.validForCache) {
@@ -139,10 +136,10 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-     * Get data from cache
-     * @param key
-     * @returns {TEntity}
-     */
+   * Get data from cache
+   * @param key
+   * @returns {TEntity}
+   */
   public getPreload<TEntity>(key: string, retrive?: (entity: TEntity) => TEntity): TEntity | undefined {
     const cacheValueInfo = this.getCacheValueInfo(key, retrive);
     if (cacheValueInfo === undefined || !cacheValueInfo.validForPreload) {
@@ -153,18 +150,18 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Check if value exists
-       * @param key
-       * @returns {boolean}
-       */
+   * Check if value exists
+   * @param key
+   * @returns {boolean}
+   */
   public exists(key: string): boolean {
     return this.getCacheValueInfo(key) !== undefined;
   }
 
   /**
-       * Remove item from cache
-       * @param key
-       */
+   * Remove item from cache
+   * @param key
+   */
   public remove(key: string, check?: boolean) {
     this.mainStorage.removeItem(this.toStorageKey(key));
     if (this.mainStorage.isEnabled(check)) {
@@ -173,8 +170,8 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Remove all from cache
-       */
+   * Remove all from cache
+   */
   public removeAll() {
     if (!this.isEnabled()) {
       return;
@@ -184,10 +181,10 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Get all tag data
-       * @param tag
-       * @returns {Array}
-       */
+   * Get all tag data
+   * @param tag
+   * @returns {Array}
+   */
   public getTagData<TEntity>(tag: string): { [key: string]: ICacheValueInfo<TEntity> } {
     if (!this.isEnabled()) {
       return undefined;
@@ -199,18 +196,15 @@ export class NgCacheService implements ICacheService {
       return null;
     }
 
-    const result = tagKeys.reduce(
-      (agg, key) => {
-        key = this.fromStorageKey(key);
-        const data = this.getCacheValueInfo<TEntity>(key);
-        if (data !== undefined) {
-          agg[key] = data;
-        }
+    const result = tagKeys.reduce((agg, key) => {
+      key = this.fromStorageKey(key);
+      const data = this.getCacheValueInfo<TEntity>(key);
+      if (data !== undefined) {
+        agg[key] = data;
+      }
 
-        return agg;
-      },
-      {} as { [key: string]: ICacheValueInfo<TEntity> }
-    );
+      return agg;
+    }, {} as { [key: string]: ICacheValueInfo<TEntity> });
 
     return result;
   }
@@ -225,26 +219,23 @@ export class NgCacheService implements ICacheService {
       return {};
     }
 
-    return Object.keys(tags).reduce(
-      (tagsAgg, tag) => {
-        const tagValues = tags[tag];
+    return Object.keys(tags).reduce((tagsAgg, tag) => {
+      const tagValues = tags[tag];
 
-        for (const valueKey of tagValues) {
-          const value = this.getItem<IStorageValue<any>>(valueKey);
+      for (const valueKey of tagValues) {
+        const value = this.getItem<IStorageValue<any>>(valueKey);
 
-          tagsAgg[valueKey] = value && value.options && (value.options.preloadExpires || value.options.cacheExpires) || 0;
-        }
+        tagsAgg[valueKey] = (value && value.options && (value.options.preloadExpires || value.options.cacheExpires)) || 0;
+      }
 
-        return tagsAgg;
-      },
-      {} as { [key: string]: number }
-    );
+      return tagsAgg;
+    }, {} as { [key: string]: number });
   }
 
   /**
-       * Remove all by tag
-       * @param tag
-       */
+   * Remove all by tag
+   * @param tag
+   */
   public removeTag(tag: string) {
     if (!this.isEnabled()) {
       return;
@@ -261,9 +252,9 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Set global cache key prefix
-       * @param prefix
-       */
+   * Set global cache key prefix
+   * @param prefix
+   */
   public setGlobalPrefix(prefix: string) {
     this.prefix = prefix;
   }
@@ -276,9 +267,9 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Validate cache mainStorage
-       * @private
-       */
+   * Validate cache mainStorage
+   * @private
+   */
   private validateStorage(fallbackStorageTypes: CacheStoragesEnum[]) {
     if (!this.mainStorage || !this.mainStorage.isEnabled()) {
       if (fallbackStorageTypes || fallbackStorageTypes.length > 0) {
@@ -299,10 +290,10 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Remove key from tags keys list
-       * @param key
-       * @private
-       */
+   * Remove key from tags keys list
+   * @param key
+   * @private
+   */
   private removeFromTag(key: string) {
     const tags = this.getItem<ITagsMap>(this.tagsStorageKey()) || {};
     let index: number;
@@ -317,10 +308,10 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Init mainStorage by type
-       * @param type
-       * @returns {CacheStorageAbstract}
-       */
+   * Init mainStorage by type
+   * @param type
+   * @returns {CacheStorageAbstract}
+   */
   private initStorage(type: CacheStoragesEnum) {
     let mainStorage: CacheStorageAbstract;
     switch (type) {
@@ -330,6 +321,10 @@ export class NgCacheService implements ICacheService {
       }
       case CacheStoragesEnum.LOCAL_STORAGE: {
         mainStorage = new CacheLocalStorage();
+        break;
+      }
+      case CacheStoragesEnum.HYBRID: {
+        mainStorage = new CacheHybridStorage(CACHE_PREFIX, new CacheLocalStorage(), 1000);
         break;
       }
       default: {
@@ -348,12 +343,12 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Prepare value to set to mainStorage
-       * @param value
-       * @param options
-       * @returns {{value: any, options: CacheOptionsInterface}}
-       * @private
-       */
+   * Prepare value to set to mainStorage
+   * @param value
+   * @param options
+   * @returns {{value: any, options: CacheOptionsInterface}}
+   * @private
+   */
   private toStorageValue<TEntity>(value: TEntity, options: INgCacheOptions): IStorageValue<TEntity> {
     return {
       value: value,
@@ -362,55 +357,55 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Prepare options to set to mainStorage
-       * @param options
-       * @returns {CacheOptionsInterface}
-       * @private
-       */
+   * Prepare options to set to mainStorage
+   * @param options
+   * @returns {CacheOptionsInterface}
+   * @private
+   */
   private toStorageOptions(options: INgCacheOptions): INgCacheOptions {
     const storageOptions: INgCacheOptions = {};
-    storageOptions.cacheExpires = options.cacheExpires || options.cacheMaxAge && (Date.now() + options.cacheMaxAge) || this.defaultOptions.cacheExpires;
-    storageOptions.preloadExpires = options.preloadExpires || options.preloadMaxAge && (Date.now() + options.preloadMaxAge) || this.defaultOptions.preloadExpires;
+    storageOptions.cacheExpires = options.cacheExpires || (options.cacheMaxAge && Date.now() + options.cacheMaxAge) || this.defaultOptions.cacheExpires;
+    storageOptions.preloadExpires = options.preloadExpires || (options.preloadMaxAge && Date.now() + options.preloadMaxAge) || this.defaultOptions.preloadExpires;
 
     return storageOptions;
   }
 
   /**
-       * Validate mainStorage value
-       * @param value
-       * @returns {boolean}
-       * @private
-       */
+   * Validate mainStorage value
+   * @param value
+   * @returns {boolean}
+   * @private
+   */
   private validateForCache<TEntity>(value: IStorageValue<TEntity>) {
     return !!value.options.cacheExpires && value.options.cacheExpires > Date.now();
   }
 
   /**
-     * Validate mainStorage value
-     * @param value
-     * @returns {boolean}
-     * @private
-     */
+   * Validate mainStorage value
+   * @param value
+   * @returns {boolean}
+   * @private
+   */
   private validateForPreload<TEntity>(value: IStorageValue<TEntity>) {
     return !!value.options.preloadExpires && value.options.preloadExpires > Date.now();
   }
 
   /**
-       * check if its system cache key
-       * @param key
-       * @returns {boolean}
-       * @private
-       */
+   * check if its system cache key
+   * @param key
+   * @returns {boolean}
+   * @private
+   */
   private isSystemKey(key: string) {
     return [this.tagsStorageKey()].indexOf(key) !== -1;
   }
 
   /**
-       * Save tag to list of tags
-       * @param tag
-       * @param key
-       * @private
-       */
+   * Save tag to list of tags
+   * @param tag
+   * @param key
+   * @private
+   */
   private saveTag(tag: string, key: string) {
     const tags = this.getItem<ITagsMap>(this.tagsStorageKey()) || {};
     if (!tags[tag]) {
@@ -422,11 +417,11 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-     * Save tag to list of tags
-     * @param tag
-     * @param key
-     * @private
-     */
+   * Save tag to list of tags
+   * @param tag
+   * @param key
+   * @private
+   */
   private saveBigObjectKey(key: string) {
     const bigObjects = this.getItem<string[]>(this.bigObjectsKey()) || [];
     if (bigObjects.includes(key)) {
@@ -439,10 +434,10 @@ export class NgCacheService implements ICacheService {
   }
 
   /**
-       * Get global cache prefix
-       * @returns {string}
-       * @private
-       */
+   * Get global cache prefix
+   * @returns {string}
+   * @private
+   */
   private getCachePrefix() {
     return this.prefix;
   }
@@ -483,7 +478,7 @@ export class NgCacheService implements ICacheService {
 
       try {
         this.mainStorage.setItem(this.bigObjectsKey(), []);
-      } catch { }
+      } catch {}
 
       isEnabled = this.mainStorage.isEnabled(true);
       if (!isEnabled) {

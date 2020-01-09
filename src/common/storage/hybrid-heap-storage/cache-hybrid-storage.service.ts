@@ -4,16 +4,17 @@ import * as _ from 'lodash';
 import { CacheLocalStorage } from '@cache/common/storage/local-storage/cache-local-storage.service';
 
 /**
- * Service for storing data in local storage
+ * Service for storing data in hybrid storage (primarly in memory and uses persistent localStorage as backup)
  */
 export class CacheHybridStorage extends CacheStorageAbstract {
   private _data: { [key: string]: any } = {};
-  private persistentStorage: CacheLocalStorage = new CacheLocalStorage();
 
-  constructor(private readonly cachePrefix: string, backupFrequency: number = 30000) {
+  private removedItems = [];
+
+  constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 30000) {
     super();
     this._data = this.load();
-    setTimeout(() => {
+    setInterval(() => {
       this.save();
     }, backupFrequency);
   }
@@ -29,6 +30,7 @@ export class CacheHybridStorage extends CacheStorageAbstract {
 
   public removeItem(key: string) {
     delete this._data[key];
+    this.removedItems.push(key);
   }
 
   public clear() {
@@ -43,15 +45,33 @@ export class CacheHybridStorage extends CacheStorageAbstract {
     return true;
   }
 
-  public save() {
+  public length() {
+    return Object.keys(this._data).length;
+  }
+
+  public key(index: number) {
+    const keys = Object.keys(this._data);
+    return keys.length > index ? keys[index] : null;
+  }
+
+  private save() {
     const data = _.cloneDeep(this._data);
+    this.cleanUpPersistentStorage();
 
     for (const key of Object.keys(data)) {
       this.persistentStorage.setItem(key, data[key]);
     }
   }
 
-  public load(): { [key: string]: any } {
+  private cleanUpPersistentStorage() {
+    const removedItems = _.cloneDeep(this.removedItems);
+    this.removedItems = [];
+    for (const ri of removedItems) {
+      this.persistentStorage.removeItem(ri);
+    }
+  }
+
+  private load(): { [key: string]: any } {
     const data: { [key: string]: any } = {};
     for (let i = 0; i < this.persistentStorage.length(); i++) {
       const key = this.persistentStorage.key(i);

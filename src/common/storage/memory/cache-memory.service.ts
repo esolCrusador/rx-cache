@@ -5,7 +5,6 @@ import { CacheStoragesEnum } from '../../../contract/cache-storages.enum';
  * Service for storing data in local storage
  */
 export class CacheMemoryStorage extends CacheStorageAbstract {
-
   private _data: { [key: string]: any } = {};
 
   public getItem<TItem>(key: string, force?: boolean): TItem {
@@ -31,5 +30,14 @@ export class CacheMemoryStorage extends CacheStorageAbstract {
 
   public isEnabled(check?: boolean) {
     return true;
+  }
+
+  public length() {
+    return Object.keys(this._data).length;
+  }
+
+  public key(index: number) {
+    const keys = Object.keys(this._data);
+    return keys.length > index ? keys[index] : null;
   }
 }

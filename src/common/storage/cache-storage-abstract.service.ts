@@ -9,36 +9,44 @@ export abstract class CacheStorageAbstract {
   protected readonly isEnabledValueTimeout: number = 10000;
 
   /**
-     * Check if storage is enabled
-     */
+   * Check if storage is enabled
+   */
   public abstract isEnabled(check?: boolean): boolean;
 
   /**
-     * Get item from storage
-     * @param key
-     */
+   * Get item from storage
+   * @param key
+   */
   public abstract getItem<TItem>(key: string, force?: boolean): TItem;
 
   /**
-     * Set item to storage
-     * @param key
-     * @param value
-     */
+   * Set item to storage
+   * @param key
+   * @param value
+   */
   public abstract setItem<TItem>(key: string, value: TItem): number | false;
 
   /**
-     * Remove item from storage
-     * @param key
-     */
+   * Remove item from storage
+   * @param key
+   */
   public abstract removeItem(key: string): void;
 
   /**
-     * Clear item in storage
-     */
+   * Clear item in storage
+   */
   public abstract clear(): void;
 
   /**
-     * Get current storage type
-     */
+   * Get current storage type
+   */
   public abstract type(): CacheStoragesEnum;
+  /**
+   * Get number of elements in storage type
+   */
+  public abstract length(): number;
+  /**
+   * Get indexed key in storage type
+   */
+  public abstract key(index: number): string | null;
 }

@@ -1,0 +1,13 @@
+{
+  "name": "@luware/cache",
+  "scripts": {
+    "version:increment": "npm version patch"
+  },
+  "version": "0.0.4",
+  "peerDependencies": {
+    "@angular/common": "8.2.6",
+    "@angular/core": "8.2.6",
+    "moment": "2.24.0",
+    "lodash": "4.17.15"
+  }
+}

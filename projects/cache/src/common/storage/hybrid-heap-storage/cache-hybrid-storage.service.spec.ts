@@ -1,6 +1,6 @@
 import * as moment from 'moment';
-import { CacheHybridStorage } from '@cache/common/storage/hybrid-heap-storage/cache-hybrid-storage.service';
-import { CacheMemoryStorage } from '@cache/common/storage/memory/cache-memory.service';
+import { CacheHybridStorage } from './cache-hybrid-storage.service';
+import { CacheMemoryStorage } from '../memory/cache-memory.service';
 import { tick, fakeAsync } from '@angular/core/testing';
 
 describe('CacheHybridStorage', () => {

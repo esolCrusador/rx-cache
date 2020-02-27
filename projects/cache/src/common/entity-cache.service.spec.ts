@@ -7,7 +7,7 @@ import { Subject, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ICacheLogger } from './i-cache-logger';
-import { MultipleDoneByCategory } from '@cache/tests/multiple-done-by-category';
+import { MultipleDoneByCategory } from '../tests/multiple-done-by-category';
 
 interface IMap<TEntity> {
   [key: string]: TEntity;

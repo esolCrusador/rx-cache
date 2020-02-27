@@ -10,7 +10,7 @@
     "e2e": "ng e2e",
     "version": "npm version patch",
     "package:build": "ng-packagr -p .\\projects\\cache\\ng-package.json",
-    "package:version": "npm run --prefix projects\\cache version:increment && git commit \\projects\\cache\\package.json && git push"
+    "package:version": "npm run --prefix projects\\cache version:increment && git commit .\\projects\\cache\\package.json -m \"version incremented\" && git push"
   },
   "private": true,
   "dependencies": {

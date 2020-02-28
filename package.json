@@ -9,10 +9,15 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "version": "npm version patch",
-    "package:build": "ng-packagr -p .\\projects\\cache\\ng-package.json",
+    "package:build": "ng-packagr -p projects/cache/ng-package.json",
     "package:test": "ng test cache",
-    "package:version": "npm run --prefix projects\\cache version:increment",
-    "package:postVersion": "git commit .\\projects\\cache\\package.json -m \"version ${npm_package_version}\" && git push"
+    "package:lint": "ng lint cache",
+    "package:lint-fix": "ng lint cache --fix=true",
+    "package:version": "yarn --cwd projects\\cache version",
+    "package:postVersion": "git commit projects\\cache\\package.json -m \"version ${npm_package_version}\" && git push",
+    "package:publish": "yarn publish dist/luware-ui-cache --newVersion $npm_package_version --registry=https://base.luware.com/Internal/_packaging/Nimbus/npm/registry/",
+    "package:debug:publish": "yarn package:build && node_modules/.bin/yalc publish dist/luware-ui-cache",
+    "package:debug:update": "yarn package:build && node_modules/.bin/yalc push dist/luware-ui-cache"
   },
   "private": true,
   "dependencies": {
@@ -55,6 +60,7 @@
     "tsickle": "0.37.0",
     "tslib": "1.10.0",
     "tslint": "5.20.1",
-    "typescript": "3.5.3"
+    "typescript": "3.5.3",
+    "yalc": "1.0.0-pre.35"
   }
 }

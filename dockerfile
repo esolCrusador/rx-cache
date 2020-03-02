@@ -1,3 +1,5 @@
+ARG package_version
+
 FROM nimbus.azurecr.io/ui-build:latest as build-stage
 
 WORKDIR /app
@@ -11,4 +13,4 @@ RUN yarn package:test --browsers ChromeHeadlessNoSandbox --watch=false
 RUN yarn package:build
 
 FROM build-stage as publish
-RUN yarn package:publish
+RUN yarn package:publish --newVersion $package_version

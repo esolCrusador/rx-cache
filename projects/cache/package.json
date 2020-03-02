@@ -1,6 +1,6 @@
 {
   "name": "@luware/cache",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "peerDependencies": {
     "@angular/common": "8.2.6",
     "@angular/core": "8.2.6",

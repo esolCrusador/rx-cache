@@ -1,0 +1,5 @@
+{
+    "watch": ["projects"],
+    "ext": "ts",
+    "exec": "yarn package:debug:update"
+  }

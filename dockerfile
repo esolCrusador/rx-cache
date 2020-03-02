@@ -11,5 +11,4 @@ RUN yarn package:test --browsers ChromeHeadlessNoSandbox --watch=false
 RUN yarn package:build
 
 FROM build-stage as publish
-RUN ls dist/luware-ui-cache
 RUN yarn package:publish

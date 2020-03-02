@@ -13,8 +13,6 @@ export class CacheService {
     @Inject(NgCacheService) private readonly ngCacheService: ICacheService
   ) {
     this.entityCaches = {};
-
-    console.log('test 5');
   }
 
   public for<TEntity>(entityName: string, options: ICacheOptions): IEntityCacheService<TEntity> {

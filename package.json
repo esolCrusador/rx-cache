@@ -16,8 +16,8 @@
     "package:version": "yarn --cwd projects\\cache version",
     "package:postVersion": "git commit projects\\cache\\package.json -m \"version ${npm_package_version}\" && git push",
     "package:publish": "yarn publish dist/luware-ui-cache --newVersion $npm_package_version --registry=https://base.luware.com/Internal/_packaging/Nimbus/npm/registry/",
-    "package:debug:publish": "yarn package:build && node_modules/.bin/yalc publish dist/luware-ui-cache",
-    "package:debug:update": "yarn package:build && node_modules/.bin/yalc push dist/luware-ui-cache"
+    "package:debug:publish": "yarn package:build && yalc publish dist/luware-ui-cache && nodemon",
+    "package:debug:update": "yarn package:build && yalc push dist/luware-ui-cache --changed"
   },
   "private": true,
   "dependencies": {
@@ -43,6 +43,7 @@
     "@types/uuid": "3.4.6",
     "codelyzer": "5.2.1",
     "core-js": "3.6.1",
+    "concurrently": "5.1.0",
     "jasmine-core": "3.5.0",
     "jasmine-spec-reporter": "4.2.1",
     "karma": "4.4.1",
@@ -53,6 +54,7 @@
     "karma-jasmine-html-reporter": "1.5.1",
     "karma-phantomjs-launcher": "1.0.4",
     "ng-packagr": "5.7.1",
+    "nodemon": "2.0.2",
     "node-sass": "4.13.0",
     "protractor": "5.4.2",
     "puppeteer": "1.20.0",

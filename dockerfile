@@ -21,4 +21,5 @@ ARG VERSION
 RUN git config --global user.email "build@luware.com"
 RUN git config --global user.name "Build Server"
 RUN yarn package:version --new-version $VERSION
+RUN yarn package:build
 RUN yarn package:publish --non-interactive

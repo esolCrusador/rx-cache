@@ -8,7 +8,6 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "version": "npm version patch",
     "package:build": "ng-packagr -p projects/cache/ng-package.json",
     "package:test": "ng test cache",
     "package:lint": "ng lint cache",

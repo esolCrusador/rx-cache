@@ -12,7 +12,7 @@
     "package:test": "ng test cache",
     "package:lint": "ng lint cache",
     "package:lint-fix": "ng lint cache --fix=true",
-    "package:version": "yarn --cwd projects\\cache version",
+    "package:version": "yarn --cwd projects/cache version",
     "package:postVersion": "git commit projects\\cache\\package.json -m \"version ${npm_package_version}\" && git push",
     "package:publish": "yarn publish dist/luware-ui-cache --registry=https://base.luware.com/Internal/_packaging/Nimbus/npm/registry/",
     "package:debug:publish": "yarn package:build && yalc publish dist/luware-ui-cache && nodemon",

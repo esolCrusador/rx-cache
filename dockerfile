@@ -18,5 +18,7 @@ RUN yarn package:build
 FROM build-stage as publish
 ARG VERSION
 #publish package with package_version args
+RUN git config --global user.email "build@luware.com"
+RUN git config --global user.name "Build Server"
 RUN yarn package:version --new-version $VERSION
 RUN yarn package:publish --non-interactive

@@ -18,4 +18,5 @@ RUN yarn package:build
 FROM build-stage as publish
 ARG VERSION
 #publish package with package_version args
-RUN yarn package:publish --new-version $VERSION
+RUN yarn package:version --new-version $VERSION
+RUN yarn package:publish --non-interactive

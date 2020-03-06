@@ -40,4 +40,12 @@ export class CacheMemoryStorage extends CacheStorageAbstract {
     const keys = Object.keys(this._data);
     return keys.length > index ? keys[index] : null;
   }
+
+  public persist(): void {
+    // Not supported
+  }
+
+  public unpersist(): void {
+    // Not supported
+  }
 }

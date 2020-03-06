@@ -35,7 +35,21 @@ export abstract class CacheStorageAbstract {
   /**
    * Clear item in storage
    */
-  public abstract clear(): void;
+  public clear(prefix: string) {
+    const keys: string[] = [];
+
+    const length = this.length();
+    for (let i = 0; i < length; i++) {
+      const key = this.key(i);
+      if (key.startsWith(prefix)) {
+        keys.push(key);
+      }
+    }
+
+    for (const key of keys) {
+      this.removeItem(key);
+    }
+  }
 
   /**
    * Get current storage type
@@ -49,4 +63,14 @@ export abstract class CacheStorageAbstract {
    * Get indexed key in storage type
    */
   public abstract key(index: number): string | null;
+
+  /**
+   * Saves data into persisted storage (selected by default)
+   */
+  public abstract persist(): void;
+
+  /**
+   * Unsave data into persisted storage (selected by default)
+   */
+  public abstract unpersist(prefix: string): void;
 }

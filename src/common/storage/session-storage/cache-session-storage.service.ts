@@ -34,13 +34,7 @@ export class CacheSessionStorage extends CacheStorageAbstract {
   public removeItem(key: string) {
     try {
       sessionStorage.removeItem(key);
-    } catch {}
-  }
-
-  public clear() {
-    try {
-      sessionStorage.clear();
-    } catch {}
+    } catch { }
   }
 
   public type() {
@@ -74,5 +68,13 @@ export class CacheSessionStorage extends CacheStorageAbstract {
 
   public key(index: number) {
     return sessionStorage.key(index);
+  }
+
+  public persist(): void {
+    // Not supported
+  }
+
+  public unpersist(prefix: string): void {
+    this.clear(prefix);
   }
 }

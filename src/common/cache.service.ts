@@ -27,4 +27,12 @@ export class CacheService {
 
     return existingCache;
   }
+
+  public persist(): void {
+    this.ngCacheService.persist();
+  }
+
+  public unPersist(): void {
+    this.ngCacheService.unpersist();
+  }
 }

@@ -177,7 +177,7 @@ export class NgCacheService implements ICacheService {
       return;
     }
 
-    this.mainStorage.clear();
+    this.mainStorage.clear(this.prefix);
   }
 
   /**
@@ -264,6 +264,14 @@ export class NgCacheService implements ICacheService {
       return this.mainStorage.type();
     }
     return undefined;
+  }
+
+  public persist(): void {
+    this.mainStorage.persist();
+  }
+
+  public unpersist(): void {
+    this.mainStorage.unpersist(this.prefix);
   }
 
   /**
@@ -478,11 +486,11 @@ export class NgCacheService implements ICacheService {
 
       try {
         this.mainStorage.setItem(this.bigObjectsKey(), []);
-      } catch {}
+      } catch { }
 
       isEnabled = this.mainStorage.isEnabled(true);
       if (!isEnabled) {
-        this.mainStorage.clear();
+        this.mainStorage.clear(this.prefix);
       }
       isEnabled = this.mainStorage.isEnabled(true);
     }

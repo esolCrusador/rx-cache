@@ -34,13 +34,7 @@ export class CacheLocalStorage extends CacheStorageAbstract {
   public removeItem(key: string) {
     try {
       localStorage.removeItem(key);
-    } catch {}
-  }
-
-  public clear() {
-    try {
-      localStorage.clear();
-    } catch {}
+    } catch { }
   }
 
   public length() {
@@ -74,5 +68,13 @@ export class CacheLocalStorage extends CacheStorageAbstract {
     }
 
     return this.isEnabledValue;
+  }
+
+  public persist() {
+    // Not Supported
+  }
+
+  public unpersist(prefix: string) {
+    this.clear(prefix);
   }
 }

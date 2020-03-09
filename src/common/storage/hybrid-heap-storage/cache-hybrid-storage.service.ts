@@ -1,6 +1,7 @@
 import { CacheStorageAbstract } from '../cache-storage-abstract.service';
 import { CacheStoragesEnum } from '../../../contract/cache-storages.enum';
 import * as _ from 'lodash';
+import { IStorageValue } from '@cache/contract/i-storage-value';
 
 /**
  * Service for storing data in hybrid storage (primarly in memory and uses persistent localStorage as backup)
@@ -14,7 +15,7 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   private removedItems = [];
   private changedKeys: string[];
 
-  constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 1000) {
+  constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 1000, private readonly timeoutValuebleDifference = 0.10) {
     super();
 
     this._persist = true;
@@ -29,8 +30,26 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   }
 
   public setItem<TItem>(key: string, value: TItem): number | false {
-    if (_.isEqual(this._data[key], value)) {
+    const existing = this._data[key];
+    if (!existing && !value) {
       return 1;
+    }
+
+    if (_.isEqual(existing, value)) {
+      return 1;
+    }
+
+    if (value && existing && value.hasOwnProperty('options')) {
+      const storageValue: IStorageValue<any> = value as any as IStorageValue<any>;
+      if (storageValue.options.hasOwnProperty('cacheExpires') && storageValue.options.hasOwnProperty('preloadExpires')) {
+        const time = new Date().getTime();
+        if (
+          this.getRaltiveExpirationDifference(existing.options.cacheExpires, storageValue.options.cacheExpires, time) < this.timeoutValuebleDifference
+          && this.getRaltiveExpirationDifference(existing.options.preloadExpires, storageValue.options.preloadExpires, time) < this.timeoutValuebleDifference
+        ) {
+          return 1;
+        }
+      }
     }
 
     this.changedKeys.push(key);
@@ -44,7 +63,7 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   }
 
   public clear() {
-    this._data = [];
+    this._data = {};
   }
 
   public type() {
@@ -121,5 +140,16 @@ export class CacheHybridStorage extends CacheStorageAbstract {
 
   public destroy(): void {
     clearInterval(this._interval);
+  }
+
+  private getRaltiveExpirationDifference(oldExpiration: number, newExpiration: number, time: number): number {
+    if (newExpiration === oldExpiration) {
+      return 0;
+    }
+
+    const oldRelativeExpiration = oldExpiration - time;
+    const newRelativeExpiration = newExpiration - time;
+
+    return (newRelativeExpiration - oldRelativeExpiration) / newRelativeExpiration;
   }
 }

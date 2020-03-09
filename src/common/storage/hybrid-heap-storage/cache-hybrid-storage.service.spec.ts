@@ -2,6 +2,7 @@ import * as moment from 'moment';
 import { CacheHybridStorage } from '@cache/common/storage/hybrid-heap-storage/cache-hybrid-storage.service';
 import { CacheMemoryStorage } from '@cache/common/storage/memory/cache-memory.service';
 import { tick, fakeAsync } from '@angular/core/testing';
+import { IStorageValue } from '@cache/contract/i-storage-value';
 
 describe('CacheHybridStorage', () => {
   let cacheStorage: CacheHybridStorage;
@@ -58,6 +59,66 @@ describe('CacheHybridStorage', () => {
       expect(persistentStorage.getItem(`${prefix}-test3`)).toEqual('test3');
 
       cacheStorage.destroy();
+    }));
+
+    it('should not update if item was not changed', fakeAsync(() => {
+      createStorage();
+      const setItemSpy = spyOn(persistentStorage, 'setItem').and.callThrough();
+
+      cacheStorage.setItem('item', { value: 1 });
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.setItem('item', { value: 1 });
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.destroy()
+    }));
+
+    it('should update if item was not changed but expiration changed', fakeAsync(() => {
+      createStorage();
+      const setItemSpy = spyOn(persistentStorage, 'setItem').and.callThrough();
+
+      cacheStorage.setItem('item', { value: 1, options: { cacheExpires: moment().add(1, 'days').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.setItem('item', { value: 1, options: { cacheExpires: moment().add(2, 'days').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(2);
+
+      cacheStorage.destroy()
+    }));
+
+    it('should not update if item was not changed but expiration changed', fakeAsync(() => {
+      createStorage();
+      const setItemSpy = spyOn(persistentStorage, 'setItem').and.callThrough();
+
+      cacheStorage.setItem('item', { value: 1, options: { cacheExpires: moment().add(1, 'days').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.setItem('item', { value: 1, options: { cacheExpires: moment().add(1, 'days').add(10, 'minutes').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.destroy()
+    }));
+
+    it('should update if item was changed to null', fakeAsync(() => {
+      createStorage();
+      const setItemSpy = spyOn(persistentStorage, 'setItem').and.callThrough();
+
+      cacheStorage.setItem('item', { value: 1, options: { cacheExpires: moment().add(1, 'days').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.setItem('item', null);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(2);
+
+      cacheStorage.destroy()
     }));
   });
 });

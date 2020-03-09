@@ -9,8 +9,8 @@ import { IStorageValue } from '@cache/contract/i-storage-value';
 export class CacheHybridStorage extends CacheStorageAbstract {
   private readonly _interval: number;
 
-  private _data: { [key: string]: any } = {};
-  private _persist: boolean;
+  private data: { [key: string]: any } = {};
+  private isPersistent: boolean;
 
   private removedItems = [];
   private changedKeys: string[];
@@ -18,19 +18,19 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 1000, private readonly timeoutValuebleDifference = 0.10) {
     super();
 
-    this._persist = true;
+    this.isPersistent = true;
     this.changedKeys = [];
-    this._data = this.load();
+    this.data = this.load();
 
     this._interval = setInterval(() => { this.save(); }, backupFrequency) as any as number;
   }
 
   public getItem<TItem>(key: string, force?: boolean): TItem {
-    return this._data[key] ? this._data[key] : null;
+    return this.data[key] ? this.data[key] : null;
   }
 
   public setItem<TItem>(key: string, value: TItem): number | false {
-    const existing = this._data[key];
+    const existing = this.data[key];
     if (!existing && !value) {
       return 1;
     }
@@ -53,17 +53,17 @@ export class CacheHybridStorage extends CacheStorageAbstract {
     }
 
     this.changedKeys.push(key);
-    this._data[key] = value;
+    this.data[key] = value;
     return 1;
   }
 
   public removeItem(key: string) {
-    delete this._data[key];
+    delete this.data[key];
     this.removedItems.push(key);
   }
 
   public clear() {
-    this._data = {};
+    this.data = {};
   }
 
   public type() {
@@ -75,20 +75,20 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   }
 
   public length() {
-    return Object.keys(this._data).length;
+    return Object.keys(this.data).length;
   }
 
   public key(index: number) {
-    const keys = Object.keys(this._data);
+    const keys = Object.keys(this.data);
     return keys.length > index ? keys[index] : null;
   }
 
   private save() {
-    if (!this._persist) {
+    if (!this.isPersistent) {
       return;
     }
 
-    const data = _.cloneDeep(this._data);
+    const data = _.cloneDeep(this.data);
     this.cleanUpPersistentStorage();
 
     if (this.changedKeys.length > 0) {
@@ -122,18 +122,18 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   }
 
   public persist(): void {
-    if (this._persist) {
+    if (this.isPersistent) {
       return;
     }
 
-    this._persist = true;
-    this.changedKeys.push(...Object.keys(this._data));
+    this.isPersistent = true;
+    this.changedKeys.push(...Object.keys(this.data));
 
     this.save();
   }
 
   public unpersist(prefix: string): void {
-    this._persist = false;
+    this.isPersistent = false;
 
     this.persistentStorage.unpersist(prefix);
   }

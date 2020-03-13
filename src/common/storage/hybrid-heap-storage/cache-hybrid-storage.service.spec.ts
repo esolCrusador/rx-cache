@@ -91,6 +91,21 @@ describe('CacheHybridStorage', () => {
       cacheStorage.destroy()
     }));
 
+    it('should update if item was not changed but expiration changed', fakeAsync(() => {
+      createStorage();
+      const setItemSpy = spyOn(persistentStorage, 'setItem').and.callThrough();
+
+      cacheStorage.setItem('item', { value: 1, options: { cacheExpires: moment().add(1, 'days').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+      cacheStorage.setItem('item', { value: 2, options: { cacheExpires: moment().add(1, 'days').unix() * 1000, preloadExpires: 0 } } as IStorageValue<number>);
+      tick(1000);
+      expect(setItemSpy).toHaveBeenCalledTimes(2);
+
+      cacheStorage.destroy()
+    }));
+
     it('should not update if item was not changed but expiration changed', fakeAsync(() => {
       createStorage();
       const setItemSpy = spyOn(persistentStorage, 'setItem').and.callThrough();

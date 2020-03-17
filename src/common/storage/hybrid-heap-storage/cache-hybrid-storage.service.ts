@@ -46,7 +46,7 @@ export class CacheHybridStorage extends CacheStorageAbstract {
 
         const existingStorageValue: IStorageValue<any> = existing as any as IStorageValue<any>;
         if (// Value is the same and timeout has changed less than timeoutValuebleDifference (10% by default).
-          _.isEqual(existingStorageValue.value, storageValue.value) 
+          _.isEqual(existingStorageValue.value, storageValue.value)
           && this.getRaltiveExpirationDifference(existingStorageValue.options.cacheExpires, storageValue.options.cacheExpires, time) < this.timeoutValuebleDifference
           && this.getRaltiveExpirationDifference(existingStorageValue.options.preloadExpires, storageValue.options.preloadExpires, time) < this.timeoutValuebleDifference
         ) {

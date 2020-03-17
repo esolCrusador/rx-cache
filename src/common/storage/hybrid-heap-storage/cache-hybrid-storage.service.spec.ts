@@ -73,7 +73,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(1);
 
-      cacheStorage.destroy()
+      cacheStorage.destroy();
     }));
 
     it('should update if item was not changed but expiration changed', fakeAsync(() => {
@@ -88,7 +88,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(2);
 
-      cacheStorage.destroy()
+      cacheStorage.destroy();
     }));
 
     it('should update if item was not changed but expiration changed', fakeAsync(() => {
@@ -103,7 +103,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(2);
 
-      cacheStorage.destroy()
+      cacheStorage.destroy();
     }));
 
     it('should not update if item was not changed but expiration changed', fakeAsync(() => {
@@ -118,7 +118,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(1);
 
-      cacheStorage.destroy()
+      cacheStorage.destroy();
     }));
 
     it('should update if item was changed to null', fakeAsync(() => {
@@ -133,7 +133,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(2);
 
-      cacheStorage.destroy()
+      cacheStorage.destroy();
     }));
   });
 });

@@ -18,5 +18,7 @@ export interface IEntityCacheService<TEntity> {
 
   update<TId>(idParam: TId, update: (data: TEntity) => void, options?: ICacheOptions): void;
 
+  remove<TId>(idParam: TId): void;
+
   setOperator<TId>(id: TId, value?: TEntity, options?: ICacheOptions): MonoTypeOperatorFunction<any>;
 }

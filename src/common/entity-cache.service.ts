@@ -144,6 +144,10 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
     }
   }
 
+  public remove<TId>(idParam: TId): void {
+    this.ngCacheService.remove(this.getKey(idParam));
+  }
+
   public setOperator<TId>(id: TId, value?: TEntity, options?: ICacheOptions): MonoTypeOperatorFunction<any> {
     return $obs => $obs.pipe(map(v => { this.set<TId>(id, value !== undefined ? value : v, options); return v; }));
   }

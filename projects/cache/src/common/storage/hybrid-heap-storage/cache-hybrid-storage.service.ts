@@ -1,7 +1,7 @@
 import { CacheStorageAbstract } from '../cache-storage-abstract.service';
 import { CacheStoragesEnum } from '../../../contract/cache-storages.enum';
 import * as _ from 'lodash';
-import { IStorageValue } from '@cache/contract/i-storage-value';
+import { IStorageValue } from '../../../contract/i-storage-value';
 
 /**
  * Service for storing data in hybrid storage (primarly in memory and uses persistent localStorage as backup)

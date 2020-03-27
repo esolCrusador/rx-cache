@@ -4,6 +4,7 @@ import { CacheModule } from '../common/cache.module';
 import { CacheConfiguration } from '../common/cache.configuration';
 import { I_CACHE_LOGGER } from '../common/i-cache-logger';
 
+// @dynamic
 @NgModule({
   imports: [
     CacheModule,

@@ -12,4 +12,7 @@ export interface ICacheService {
   getTagData(tag: string): {[key: string]: any};
   removeTag(tag: string);
   setGlobalPrefix(prefix: string);
+
+  persist(): void;
+  unpersist(): void;
 }

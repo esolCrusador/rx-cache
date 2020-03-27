@@ -38,4 +38,10 @@ export class MockCacheService implements ICacheService {
   }
   public removeTag(tag: string) { }
   public setGlobalPrefix(prefix: string) { }
+
+  public persist(): void {
+  }
+
+  public unpersist(): void {
+  }
 }

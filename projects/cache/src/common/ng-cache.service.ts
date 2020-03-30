@@ -13,7 +13,7 @@ import { INgCacheStoreOptions } from '../contract/i-ng-cache-store-options';
 import { ICacheValueInfo } from '../contract/i-cache-value-info';
 import { ITagsMap } from '../contract/i-tags-map';
 import { ICacheLogger, I_CACHE_LOGGER } from './i-cache-logger';
-import { CacheHybridStorage } from '@cache/common/storage/hybrid-heap-storage/cache-hybrid-storage.service';
+import { CacheHybridStorage } from '../common/storage/hybrid-heap-storage/cache-hybrid-storage.service';
 
 const CACHE_PREFIX = 'CacheService';
 const DEFAULT_ENABLED_STORAGE = CacheStoragesEnum.MEMORY;

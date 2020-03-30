@@ -1,5 +1,5 @@
+// @dynamic
 export class SerializeHelper {
-
 
   private static zeroReplaceRegexp = SerializeHelper.getReplaceRegexp('0');
   private static zeroTimeReplaceRegexp = SerializeHelper.getReplaceRegexp('"00:00:00"');

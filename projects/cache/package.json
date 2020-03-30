@@ -1,0 +1,10 @@
+{
+  "name": "@entity/cache",
+  "version": "1.0.2006315",
+  "peerDependencies": {
+    "@angular/common": "8.2.6",
+    "@angular/core": "8.2.6",
+    "lodash": "4.17.15",
+    "moment": "2.24.0"
+  }
+}

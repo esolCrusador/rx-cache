@@ -1,9 +1,10 @@
 import { CacheStoragesEnum } from '../../contract/cache-storages.enum';
+import { OnDestroy } from '@angular/core';
 
 /**
  * Abstract cache storage
  */
-export abstract class CacheStorageAbstract {
+export abstract class CacheStorageAbstract implements OnDestroy {
   protected isEnabledValue: boolean;
   protected isEnabledValueTimestamp: Date;
   protected readonly isEnabledValueTimeout: number = 10000;
@@ -73,4 +74,7 @@ export abstract class CacheStorageAbstract {
    * Unsave data into persisted storage (selected by default)
    */
   public abstract unpersist(prefix: string): void;
+
+  public ngOnDestroy(): void {
+  }
 }

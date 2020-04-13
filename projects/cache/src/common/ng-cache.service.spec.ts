@@ -3,21 +3,27 @@ import { CacheStoragesEnum } from '../contract/cache-storages.enum';
 import * as moment from 'moment';
 import { CacheMemoryStorage } from './storage/memory/cache-memory.service';
 import { ICacheLogger } from './i-cache-logger';
+import { NgZone } from '@angular/core';
 
 describe('NgCacheService', () => {
   let ngCacheService: NgCacheService;
   let logger: jasmine.SpyObj<ICacheLogger>;
+  let ngZone: NgZone;
+
+  beforeAll(() => {
+    ngZone = new NgZone({ enableLongStackTrace: false });
+  });
 
   beforeEach(() => {
     logger = jasmine.createSpyObj<ICacheLogger>('Logger', ['error']);
 
-    ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'Browser', logger);
+    ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'Browser', logger, ngZone);
   });
 
   describe('constructor', () => {
     it('should fail if no logger types were specified', (done: DoneFn) => {
       try {
-        ngCacheService = new NgCacheService(null, 'server', logger);
+        ngCacheService = new NgCacheService(null, 'server', logger, ngZone);
         expect(ngCacheService).not.toBeDefined();
         done.fail();
       } catch (error) {
@@ -28,7 +34,7 @@ describe('NgCacheService', () => {
 
     it('should fail if empty logger types were specified', (done: DoneFn) => {
       try {
-        ngCacheService = new NgCacheService([], 'server', logger);
+        ngCacheService = new NgCacheService([], 'server', logger, ngZone);
         expect(ngCacheService).not.toBeDefined();
         done.fail();
       } catch (error) {
@@ -38,7 +44,7 @@ describe('NgCacheService', () => {
     });
 
     it('should log error if server platform has Local Storage logging type', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.LOCAL_STORAGE], 'server', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.LOCAL_STORAGE], 'server', logger, ngZone);
 
       expect(ngCacheService).toBeDefined();
       expect(ngCacheService.getStorageType()).toBe(CacheStoragesEnum.LOCAL_STORAGE);
@@ -46,7 +52,7 @@ describe('NgCacheService', () => {
     });
 
     it('should log error if server platform has Session Storage logging type', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.SESSION_STORAGE], 'server', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.SESSION_STORAGE], 'server', logger, ngZone);
 
       expect(ngCacheService).toBeDefined();
       expect(ngCacheService.getStorageType()).toBe(CacheStoragesEnum.SESSION_STORAGE);
@@ -54,7 +60,7 @@ describe('NgCacheService', () => {
     });
 
     it('should work correctly if server platform has Memory Storage logging type', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'server', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'server', logger, ngZone);
 
       expect(ngCacheService).toBeDefined();
       expect(ngCacheService.getStorageType()).toBe(CacheStoragesEnum.MEMORY);
@@ -62,7 +68,7 @@ describe('NgCacheService', () => {
     });
 
     it('should log error if browser platform has Memory Storage logging type', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY, CacheStoragesEnum.LOCAL_STORAGE], 'browser', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY, CacheStoragesEnum.LOCAL_STORAGE], 'browser', logger, ngZone);
 
       expect(ngCacheService).toBeDefined();
       expect(ngCacheService.getStorageType()).toBe(CacheStoragesEnum.MEMORY);
@@ -70,7 +76,7 @@ describe('NgCacheService', () => {
     });
 
     it('should work correctly if browser platform has Session Storage logging type', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.LOCAL_STORAGE], 'browser', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.LOCAL_STORAGE], 'browser', logger, ngZone);
 
       expect(ngCacheService).toBeDefined();
       expect(ngCacheService.getStorageType()).toBe(CacheStoragesEnum.LOCAL_STORAGE);
@@ -78,7 +84,7 @@ describe('NgCacheService', () => {
     });
 
     it('should work correctly if browser platform has Local Storage logging type', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.SESSION_STORAGE], 'browser', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.SESSION_STORAGE], 'browser', logger, ngZone);
 
       expect(ngCacheService).toBeDefined();
       expect(ngCacheService.getStorageType()).toBe(CacheStoragesEnum.SESSION_STORAGE);
@@ -88,7 +94,7 @@ describe('NgCacheService', () => {
 
   describe('get/set', () => {
     beforeEach(() => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger, ngZone);
       expect(logger.error).not.toHaveBeenCalled();
     });
 
@@ -143,7 +149,7 @@ describe('NgCacheService', () => {
 
   describe('tags data', () => {
     beforeEach(() => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger, ngZone);
       expect(logger.error).not.toHaveBeenCalled();
     });
 
@@ -163,10 +169,10 @@ describe('NgCacheService', () => {
       const tagData = Object.keys(tagInfo).reduce((agg, key) => { agg[key] = tagInfo[key].value; return agg; }, {} as { [key: string]: any });
 
       expect(tagData).toEqual({
-        '111': 111,
-        '222': null,
-        '333': 3,
-        '444': 0
+        111: 111,
+        222: null,
+        333: 3,
+        444: 0
       });
 
       ngCacheService.remove('111');
@@ -194,7 +200,7 @@ describe('NgCacheService', () => {
 
   describe('mainStorage disabled', () => {
     it('should work without errors with disabled mainStorage', () => {
-      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger);
+      ngCacheService = new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger, ngZone);
       const mainStorage: CacheMemoryStorage = (ngCacheService as any).mainStorage;
       spyOn(mainStorage, 'isEnabled').and.returnValue(false);
       spyOn(mainStorage, 'getItem').and.returnValue(undefined);

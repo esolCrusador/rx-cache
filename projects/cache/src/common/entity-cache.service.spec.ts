@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ICacheLogger } from './i-cache-logger';
 import { MultipleDoneByCategory } from '../tests/multiple-done-by-category';
+import { NgZone } from '@angular/core';
 
 interface IMap<TEntity> {
   [key: string]: TEntity;
@@ -58,7 +59,7 @@ describe('EntityCacheService', () => {
 
   beforeEach(() => {
     logger = jasmine.createSpyObj<ICacheLogger>('Logger', ['error']);
-    cacheService = new CacheService(new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger));
+    cacheService = new CacheService(new NgCacheService([CacheStoragesEnum.MEMORY], 'browser', logger, new NgZone({ enableLongStackTrace: false })));
   });
 
   describe('getLazy', () => {

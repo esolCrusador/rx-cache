@@ -2,12 +2,13 @@ import { CacheStorageAbstract } from '../cache-storage-abstract.service';
 import { CacheStoragesEnum } from '../../../contract/cache-storages.enum';
 import * as _ from 'lodash';
 import { IStorageValue } from '../../../contract/i-storage-value';
+import { OnDestroy, NgZone } from '@angular/core';
 
 /**
  * Service for storing data in hybrid storage (primarly in memory and uses persistent localStorage as backup)
  */
-export class CacheHybridStorage extends CacheStorageAbstract {
-  private readonly _interval: number;
+export class CacheHybridStorage extends CacheStorageAbstract implements OnDestroy {
+  private backupIntervalHandle: number;
 
   private data: { [key: string]: any } = {};
   private isPersistent: boolean;
@@ -15,14 +16,22 @@ export class CacheHybridStorage extends CacheStorageAbstract {
   private removedItems = [];
   private changedKeys: string[];
 
-  constructor(private readonly cachePrefix: string, private readonly persistentStorage: CacheStorageAbstract, backupFrequency: number = 1000, private readonly timeoutValuebleDifference = 0.10) {
+  constructor(
+    private readonly cachePrefix: string,
+    private readonly ngZone: NgZone,
+    private readonly persistentStorage: CacheStorageAbstract,
+    backupFrequency: number = 1000,
+    private readonly timeoutValuebleDifference = 0.10
+  ) {
     super();
 
     this.isPersistent = true;
     this.changedKeys = [];
     this.data = this.load();
 
-    this._interval = setInterval(() => { this.save(); }, backupFrequency) as any as number;
+    this.ngZone.runOutsideAngular(() => {
+      this.backupIntervalHandle = setInterval(() => { this.save(); }, backupFrequency) as any as number;
+    });
   }
 
   public getItem<TItem>(key: string, force?: boolean): TItem {
@@ -141,8 +150,8 @@ export class CacheHybridStorage extends CacheStorageAbstract {
     this.persistentStorage.unpersist(prefix);
   }
 
-  public destroy(): void {
-    clearInterval(this._interval);
+  public ngOnDestroy(): void {
+    clearInterval(this.backupIntervalHandle);
   }
 
   private getRaltiveExpirationDifference(oldExpiration: number, newExpiration: number, time: number): number {

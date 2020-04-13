@@ -3,6 +3,7 @@ import { CacheHybridStorage } from './cache-hybrid-storage.service';
 import { CacheMemoryStorage } from '../memory/cache-memory.service';
 import { tick, fakeAsync } from '@angular/core/testing';
 import { IStorageValue } from '../../../contract/i-storage-value';
+import { NgZone } from '@angular/core';
 
 describe('CacheHybridStorage', () => {
   let cacheStorage: CacheHybridStorage;
@@ -12,7 +13,7 @@ describe('CacheHybridStorage', () => {
   function createStorage() {
     persistentStorage = new CacheMemoryStorage();
     persistentStorage.setItem(`${prefix}-test-default`, `test-default`);
-    cacheStorage = new CacheHybridStorage(prefix, persistentStorage, 500);
+    cacheStorage = new CacheHybridStorage(prefix, new NgZone({ enableLongStackTrace: false }), persistentStorage, 500);
   }
 
   describe('for', () => {
@@ -23,7 +24,7 @@ describe('CacheHybridStorage', () => {
       expect(cacheStorage instanceof CacheHybridStorage).toBeTruthy();
       expect(cacheStorage.getItem(`${prefix}-test-default`)).toEqual(`test-default`);
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should write the items after 500 ms to the persistent storage', fakeAsync(() => {
@@ -39,7 +40,7 @@ describe('CacheHybridStorage', () => {
       expect(persistentStorage.getItem(`${prefix}-test2`)).toEqual('test2');
       expect(persistentStorage.getItem(`${prefix}-test3`)).toEqual('test3');
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should delete the items after 500 ms from the persistent storage', fakeAsync(() => {
@@ -58,7 +59,7 @@ describe('CacheHybridStorage', () => {
       expect(persistentStorage.getItem(`${prefix}-test2`)).toBeNull();
       expect(persistentStorage.getItem(`${prefix}-test3`)).toEqual('test3');
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should not update if item was not changed', fakeAsync(() => {
@@ -73,7 +74,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(1);
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should update if item was not changed but expiration changed', fakeAsync(() => {
@@ -88,7 +89,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(2);
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should update if item was not changed but expiration changed', fakeAsync(() => {
@@ -103,7 +104,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(2);
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should not update if item was not changed but expiration changed', fakeAsync(() => {
@@ -118,7 +119,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(1);
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
 
     it('should update if item was changed to null', fakeAsync(() => {
@@ -133,7 +134,7 @@ describe('CacheHybridStorage', () => {
       tick(1000);
       expect(setItemSpy).toHaveBeenCalledTimes(2);
 
-      cacheStorage.destroy();
+      cacheStorage.ngOnDestroy();
     }));
   });
 });

@@ -1,4 +1,4 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID, NgZone, OnDestroy } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { ICacheService } from '../contract/i-cache.service';
 import { CacheStoragesEnum } from '../contract/cache-storages.enum';
@@ -19,7 +19,8 @@ const CACHE_PREFIX = 'CacheService';
 const DEFAULT_ENABLED_STORAGE = CacheStoragesEnum.MEMORY;
 
 @Injectable({ providedIn: 'root' })
-export class NgCacheService implements ICacheService {
+export class NgCacheService implements ICacheService, OnDestroy {
+  private timeoutHandle: number;
   /**
    * Default cache options
    * @type CacheOptionsInterface
@@ -38,7 +39,12 @@ export class NgCacheService implements ICacheService {
   private mainStorage: CacheStorageAbstract;
   private readonly fallbackStorageTypes: CacheStoragesEnum[];
 
-  public constructor(storageTypes: CacheConfiguration, @Inject(PLATFORM_ID) private readonly platformId: Object, @Inject(I_CACHE_LOGGER) private readonly logger: ICacheLogger) {
+  public constructor(
+    storageTypes: CacheConfiguration,
+    @Inject(PLATFORM_ID) private readonly platformId: Object,
+    @Inject(I_CACHE_LOGGER) private readonly logger: ICacheLogger,
+    private readonly ngZone: NgZone,
+  ) {
     if (!storageTypes || storageTypes.length < 1) {
       throw new Error('Please specify storage types');
     }
@@ -64,7 +70,16 @@ export class NgCacheService implements ICacheService {
       }
     }
 
-    setTimeout(() => this.handleExpiration(), 1000 * 60 /* 1 minute */);
+    if (isPlatformBrowser(this.platformId)) {
+      this.ngZone.runOutsideAngular(() => {
+        this.timeoutHandle = setTimeout(() => this.handleExpiration(), 1000 * 60 /* 1 minute */) as any as number;
+      });
+    }
+  }
+
+  public ngOnDestroy() {
+    clearTimeout(this.timeoutHandle);
+    this.mainStorage.ngOnDestroy();
   }
 
   /**
@@ -116,8 +131,8 @@ export class NgCacheService implements ICacheService {
 
     return {
       value: retrive && storageValue.value ? retrive(storageValue.value) : storageValue.value,
-      validForCache: validForCache,
-      validForPreload: validForPreload,
+      validForCache,
+      validForPreload,
     };
   }
 
@@ -332,7 +347,7 @@ export class NgCacheService implements ICacheService {
         break;
       }
       case CacheStoragesEnum.HYBRID: {
-        mainStorage = new CacheHybridStorage(CACHE_PREFIX, new CacheLocalStorage(), 1000);
+        mainStorage = new CacheHybridStorage(CACHE_PREFIX, this.ngZone, new CacheLocalStorage(), 1000);
         break;
       }
       default: {
@@ -359,7 +374,7 @@ export class NgCacheService implements ICacheService {
    */
   private toStorageValue<TEntity>(value: TEntity, options: INgCacheOptions): IStorageValue<TEntity> {
     return {
-      value: value,
+      value,
       options: this.toStorageOptions(options),
     };
   }
@@ -508,7 +523,9 @@ export class NgCacheService implements ICacheService {
       }
     }
 
-    setTimeout(() => this.handleExpiration(), 1000 * 60 * 10 /* 10 minutes */);
+    this.ngZone.runOutsideAngular(() => {
+      this.timeoutHandle = setTimeout(() => this.handleExpiration(), 1000 * 60 * 10 /* 10 minutes */) as any as number;
+    });
   }
 
   private getExpired(items: { [key: string]: number }): string[] {

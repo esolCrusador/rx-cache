@@ -8,7 +8,7 @@ import { OnDestroy, NgZone } from '@angular/core';
  * Service for storing data in hybrid storage (primarly in memory and uses persistent localStorage as backup)
  */
 export class CacheHybridStorage extends CacheStorageAbstract implements OnDestroy {
-  private backupInterval: number;
+  private backupIntervalHandle: number;
 
   private data: { [key: string]: any } = {};
   private isPersistent: boolean;
@@ -30,7 +30,7 @@ export class CacheHybridStorage extends CacheStorageAbstract implements OnDestro
     this.data = this.load();
 
     this.ngZone.runOutsideAngular(() => {
-      this.backupInterval = setInterval(() => { this.save(); }, backupFrequency) as any as number;
+      this.backupIntervalHandle = setInterval(() => { this.save(); }, backupFrequency) as any as number;
     });
   }
 
@@ -151,7 +151,7 @@ export class CacheHybridStorage extends CacheStorageAbstract implements OnDestro
   }
 
   public ngOnDestroy(): void {
-    clearInterval(this.backupInterval);
+    clearInterval(this.backupIntervalHandle);
   }
 
   private getRaltiveExpirationDifference(oldExpiration: number, newExpiration: number, time: number): number {

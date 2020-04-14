@@ -63,9 +63,38 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
     };
   }
 
-  public useMapCache(makeRequest$: (ids: string[]) => Observable<{ [id: string]: TEntity }>, ids: string[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
-  public useMapCache(makeRequest$: (ids: number[]) => Observable<{ [id: string]: TEntity }>, ids: number[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
-  public useMapCache(makeRequest$: (ids: any[]) => Observable<{ [id: string]: TEntity }>, ids: any[], preload?: boolean): Observable<{ [id: string]: TEntity }> {
+  public useMapCache(ids: (string | number)[], preload?: boolean, formatId?: (id: (string | number)) => string): MonoTypeOperatorFunction<{ [id: string]: TEntity }> {
+    const getKey = formatId ? (id: string | number) => this.getKey(formatId(id)) : null;
+
+    return obs$ => {
+      const idKeys = ids.reduce((agg, id) => { agg[id] = getKey ? getKey(id) : this.getKey(id); return agg; }, {} as { [id: string]: string });
+      const cacheInfo: { [id: string]: ICacheValueInfo<TEntity> } = this.getMapCacheInfo(ids, idKeys);
+
+      if (this.defaultOptions.cacheExpires || this.defaultOptions.cacheMaxAge) {
+        if (ids.every(id => cacheInfo[id] && cacheInfo[id].validForCache)) {
+          return of(ids.reduce((agg, id) => { agg[id] = cacheInfo[id].value; return agg; }, {} as { [id: string]: TEntity }));
+        }
+      }
+
+      obs$ = obs$.pipe(tap(m => {
+        for (const id of Object.keys(m)) {
+          this.ngCacheService.set(getKey ? getKey(id) : this.getKey(id), m[id], this.defaultOptions);
+        }
+      }));
+
+      if (preload) {
+        if (cacheInfo && ids.every(id => cacheInfo[id] && cacheInfo[id].validForPreload)) {
+          obs$ = concat(of(ids.reduce((agg, id) => { agg[id] = cacheInfo[id].value; return agg; }, {} as { [id: string]: TEntity })), obs$);
+        }
+      }
+
+      return obs$;
+    };
+  }
+
+  public getMap(makeRequest$: (ids: string[]) => Observable<{ [id: string]: TEntity }>, ids: string[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
+  public getMap(makeRequest$: (ids: number[]) => Observable<{ [id: string]: TEntity }>, ids: number[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
+  public getMap(makeRequest$: (ids: any[]) => Observable<{ [id: string]: TEntity }>, ids: any[], preload?: boolean): Observable<{ [id: string]: TEntity }> {
     const idKeys = ids.reduce((agg, id) => { agg[id] = this.getKey(id); return agg; }, {} as { [id: string]: string });
     let requestIds: (string | number)[] = ids;
     let existingIds: (string | number)[] = null;

@@ -156,12 +156,12 @@ describe('EntityCacheService', () => {
         createEntityCacheService({ cacheMaxAge: moment.duration(1, 'year') });
 
         let result1: IMap<TestEntity>;
-        const obs1$ = entityCacheService.useMapCache(ids => getData1(ids), testCase.ids1);
+        const obs1$ = entityCacheService.getMap(ids => getData1(ids), testCase.ids1);
         obs1$.subscribe(r => result1 = r);
         returnData1$.next();
 
         let result2: IMap<TestEntity>;
-        const obs2$ = entityCacheService.useMapCache(ids => getData2(ids), testCase.ids2);
+        const obs2$ = entityCacheService.getMap(ids => getData2(ids), testCase.ids2);
         obs2$.subscribe(r => result2 = r);
         returnData2$.next();
 
@@ -196,11 +196,11 @@ describe('EntityCacheService', () => {
         createEntityCacheService({ cacheMaxAge: moment.duration(1, 'year') });
 
         let result1: IMap<TestEntity>;
-        const obs1$ = entityCacheService.useMapCache(ids => getData1(ids), testCase.ids1);
+        const obs1$ = entityCacheService.getMap(ids => getData1(ids), testCase.ids1);
         obs1$.subscribe(r => result1 = r);
 
         let result2: IMap<TestEntity>;
-        const obs2$ = entityCacheService.useMapCache(ids => getData2(ids), testCase.ids2);
+        const obs2$ = entityCacheService.getMap(ids => getData2(ids), testCase.ids2);
         obs2$.subscribe(r => result2 = r);
         returnData2$.next();
 
@@ -284,7 +284,7 @@ describe('EntityCacheService', () => {
     });
   });
 
-  describe('useMapCache', () => {
+  describe('getMap', () => {
     beforeEach(() => {
       createEntityCacheService();
     });
@@ -292,11 +292,11 @@ describe('EntityCacheService', () => {
     it('should not quick load if no data in test', (done: DoneFn) => {
       const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 2 });
 
-      entityCacheService.useMapCache(ids => of({ 33: testDatabase[33] }), [33], true).subscribe(r => {
+      entityCacheService.getMap(ids => of({ 33: testDatabase[33] }), [33], true).subscribe(r => {
         multipleDone.done('notCached');
       });
 
-      entityCacheService.useMapCache(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], true).subscribe(res => {
+      entityCacheService.getMap(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], true).subscribe(res => {
         multipleDone.done('cached', [
           r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
           r => expect(r).toEqual({ 33: testDatabase[33] }),
@@ -307,19 +307,19 @@ describe('EntityCacheService', () => {
     it('should not quick load data if preload = false', (done: DoneFn) => {
       const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, notCached2: 1, cached: 1, cachedpreload: 2 });
 
-      entityCacheService.useMapCache(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], false).subscribe(r => {
+      entityCacheService.getMap(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], false).subscribe(r => {
         multipleDone.done('notCached');
       });
 
-      entityCacheService.useMapCache(ids => of({ 33: testDatabase[33] }), [33], false).subscribe(r => {
+      entityCacheService.getMap(ids => of({ 33: testDatabase[33] }), [33], false).subscribe(r => {
         multipleDone.done('cached', [data => expect(data).toEqual({ 33: testDatabase[33] })], r);
       });
 
-      entityCacheService.useMapCache(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], false).subscribe(r => {
+      entityCacheService.getMap(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], false).subscribe(r => {
         multipleDone.done('notCached2');
       });
 
-      entityCacheService.useMapCache(ids => of({ 33: testDatabase[33] }), [33], true).subscribe(res => {
+      entityCacheService.getMap(ids => of({ 33: testDatabase[33] }), [33], true).subscribe(res => {
         multipleDone.done('cachedpreload', [
           r => expect(r).toEqual({ 33: testDatabase[33] }),
           r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
@@ -330,11 +330,11 @@ describe('EntityCacheService', () => {
     it('should quick load data if it was included in other request', (done: DoneFn) => {
       const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 2 });
 
-      entityCacheService.useMapCache(ids => of({ 33: testDatabase[33], 54: testDatabase[54] }), [33, 54], true).subscribe(r => {
+      entityCacheService.getMap(ids => of({ 33: testDatabase[33], 54: testDatabase[54] }), [33, 54], true).subscribe(r => {
         multipleDone.done('notCached');
       });
 
-      entityCacheService.useMapCache(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], true).subscribe(res => {
+      entityCacheService.getMap(ids => of({ 33: { id: 2, name: '2', value: '222' } }), [33], true).subscribe(res => {
         multipleDone.done('cached', [
           r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
           r => expect(r).toEqual({ 33: testDatabase[33] }),
@@ -345,16 +345,244 @@ describe('EntityCacheService', () => {
     it('should not quick load data if it was partially included in other request', (done: DoneFn) => {
       const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 1 });
 
-      entityCacheService.useMapCache(ids => of({ 33: testDatabase[33], 54: testDatabase[54] }), [33, 54], true).subscribe(r => {
+      entityCacheService.getMap(ids => of({ 33: testDatabase[33], 54: testDatabase[54] }), [33, 54], true).subscribe(r => {
         multipleDone.done('notCached');
       });
 
 
-      entityCacheService.useMapCache(ids => of({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] }), [33, 103], true).subscribe(res => {
+      entityCacheService.getMap(ids => of({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] }), [33, 103], true).subscribe(res => {
         multipleDone.done('cached', [
           r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] })
         ], res);
       });
+    });
+  });
+
+  describe('useMapCache:preload', () => {
+    beforeEach(() => {
+      createEntityCacheService();
+    });
+
+    it('should not quick load if no data in test', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 2, completed: 1 });
+
+      of({ 33: testDatabase[33] }).pipe(entityCacheService.useMapCache([33], true)).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(entityCacheService.useMapCache([33], true)).subscribe(res => {
+        multipleDone.done('cached', [
+          r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
+          r => expect(r).toEqual({ 33: testDatabase[33] }),
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should not quick load data if preload = false', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 2, notCached2: 1, cachedpreload: 2, completed: 1 });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(
+        entityCacheService.useMapCache([33], false)
+      ).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: testDatabase[33] }).pipe(
+        entityCacheService.useMapCache([33], false)
+      ).subscribe(r => {
+        multipleDone.done('notCached', [data => expect(data).toEqual({ 33: testDatabase[33] })], r);
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(
+        entityCacheService.useMapCache([33], false)
+      ).subscribe(r => {
+        multipleDone.done('notCached2');
+      });
+
+      of({ 33: testDatabase[33] }).pipe(
+        entityCacheService.useMapCache([33], true)
+      ).subscribe(res => {
+        multipleDone.done('cachedpreload', [
+          r => expect(r).toEqual({ 33: testDatabase[33] }),
+          r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should quick load data if it was included in other request', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 2, completed: 1 });
+
+      of({ 33: testDatabase[33], 54: testDatabase[54] }).pipe(
+        entityCacheService.useMapCache([33, 54], true)
+      ).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(
+        entityCacheService.useMapCache([33], true)
+      ).subscribe(res => {
+        multipleDone.done('cached', [
+          r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
+          r => expect(r).toEqual({ 33: testDatabase[33] }),
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should not quick load data if it was partially included in other request', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 1, completed: 1 });
+
+      of({ 33: testDatabase[33], 54: testDatabase[54] }).pipe(
+        entityCacheService.useMapCache([33, 54], true)
+      ).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] }).pipe(
+        entityCacheService.useMapCache([33, 103], true)
+      ).subscribe(res => {
+        multipleDone.done('cached', [
+          r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] })
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+  });
+
+  describe('useMapCache:cache', () => {
+    beforeEach(() => {
+      createEntityCacheService({ cacheMaxAge: moment.duration(1, 'day') });
+    });
+
+    it('should load data from cache second time', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 1, completed: 1 });
+
+      of({ 33: testDatabase[33] }).pipe(entityCacheService.useMapCache([33], true)).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(entityCacheService.useMapCache([33], true)).subscribe(res => {
+        multipleDone.done('cached', [
+          r => expect(r).toEqual({ 33: testDatabase[33] }),
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should reload data if keys set changed', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 2, cached: 1, completed: 1 });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(
+        entityCacheService.useMapCache([33], false)
+      ).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: testDatabase[33] }).pipe(
+        entityCacheService.useMapCache([33], false)
+      ).subscribe(r => {
+        multipleDone.done('cached', [data => expect(data).toEqual({ 33: { id: 2, name: '2', value: '222' } })], r);
+      });
+
+      of({ 33: testDatabase[33], 103: { id: 103, name: '103', value: '103' } }).pipe(
+        entityCacheService.useMapCache([33, 103], false)
+      ).subscribe(r => {
+        expect(r).toEqual({ 33: testDatabase[33], 103: { id: 103, name: '103', value: '103' } });
+        multipleDone.done('notCached');
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should get data from cache if it was included in other request', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 1, completed: 1 });
+
+      of({ 33: testDatabase[33], 54: testDatabase[54] }).pipe(
+        entityCacheService.useMapCache([33, 54], true)
+      ).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(
+        entityCacheService.useMapCache([33], true)
+      ).subscribe(res => {
+        expect(res).toEqual({ 33: testDatabase[33] });
+
+        multipleDone.done('cached');
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should reload load data if it was partially included in other request', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 1, completed: 1 });
+
+      of({ 33: testDatabase[33], 54: testDatabase[54] }).pipe(
+        entityCacheService.useMapCache([33, 54], true)
+      ).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] }).pipe(
+        entityCacheService.useMapCache([33, 103], true)
+      ).subscribe(res => {
+        multipleDone.done('cached', [
+          r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' }, 103: testDatabase[103] })
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+  });
+
+  describe('useMapCache:formatId', () => {
+    beforeEach(() => {
+      createEntityCacheService({ cacheMaxAge: moment.duration(1, 'day') });
+    });
+
+    it('should get/set data with formated Id', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, cached: 1, completed: 1 });
+
+      of({ 33: testDatabase[33] }).pipe(entityCacheService.useMapCache([33], true, id => `+${id}`)).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(entityCacheService.useMapCache([33], true, id => `+${id}`)).subscribe(res => {
+        multipleDone.done('cached', [
+          r => expect(r).toEqual({ 33: testDatabase[33] }),
+        ], res);
+      });
+
+      multipleDone.done('completed');
+    });
+
+    it('should not differently formated data data with formated Id', (done: DoneFn) => {
+      const multipleDone = new MultipleDoneByCategory(done, { notCached: 1, differentKey: 2, completed: 1 });
+
+      of({ 33: testDatabase[33] }).pipe(entityCacheService.useMapCache([33], true, id => `+${id}`)).subscribe(r => {
+        multipleDone.done('notCached');
+      });
+
+      of({ 33: { id: 2, name: '2', value: '222' } }).pipe(entityCacheService.useMapCache([33], true, id => `-${id}`)).subscribe(res => {
+        multipleDone.done('differentKey', [
+          r => expect(r).toEqual({ 33: { id: 2, name: '2', value: '222' } }),
+        ], res);
+      });
+
+      of({ 33: { id: 333, name: '333', value: '333' } }).pipe(entityCacheService.useMapCache([33], true)).subscribe(res => {
+        multipleDone.done('differentKey', [
+          r => expect(r).toEqual({ 33: { id: 333, name: '333', value: '333' } }),
+        ], res);
+      });
+
+      multipleDone.done('completed');
     });
   });
 });

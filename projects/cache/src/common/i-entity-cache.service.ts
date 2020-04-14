@@ -8,8 +8,9 @@ export interface IEntityCacheService<TEntity> {
   setRetriveMethod(retrive: (entity: TEntity) => TEntity): IEntityCacheService<TEntity>;
 
   useCache<TId = any>(id: TId, preload?: boolean): MonoTypeOperatorFunction<TEntity>;
-  useMapCache(makeRequest$: (ids: string[]) => Observable<{ [id: string]: TEntity }>, ids: string[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
-  useMapCache(makeRequest$: (ids: number[]) => Observable<{ [id: string]: TEntity }>, ids: number[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
+  useMapCache(ids: (string | number)[], preload?: boolean, formatId?: (id: (string | number)) => string): MonoTypeOperatorFunction<{ [id: string]: TEntity }>;
+  getMap(makeRequest$: (ids: string[]) => Observable<{ [id: string]: TEntity }>, ids: string[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
+  getMap(makeRequest$: (ids: number[]) => Observable<{ [id: string]: TEntity }>, ids: number[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
 
   getInfo<TId>(idParam: TId): ICacheValueInfo<TEntity>;
   get<TId>(idParam: TId): TEntity;

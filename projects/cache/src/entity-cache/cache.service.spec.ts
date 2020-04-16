@@ -1,5 +1,5 @@
 import { CacheService } from './cache.service';
-import { MockCacheService } from './ng-cache-mock.service';
+import { MockCacheService } from '../common/ng-cache-mock.service';
 import { EntityCacheService } from './entity-cache.service';
 import * as moment from 'moment';
 

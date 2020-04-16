@@ -2,8 +2,8 @@ export * from './browser/ng-cache.browser.module';
 
 export * from './common/cache.configuration';
 export * from './common/cache.module';
-export * from './common/cache.service';
-export * from './common/entity-cache.service';
+export * from './entity-cache/cache.service';
+export * from './entity-cache/entity-cache.service';
 export * from './common/i-entity-cache.service';
 export * from './common/i-cache-logger';
 export * from './common/ng-cache-mock.service';

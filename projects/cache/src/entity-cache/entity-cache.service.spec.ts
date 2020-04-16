@@ -1,12 +1,12 @@
 import { CacheService } from './cache.service';
-import { NgCacheService } from './ng-cache.service';
+import { NgCacheService } from '../common/ng-cache.service';
 import { CacheStoragesEnum } from '../contract/cache-storages.enum';
 import { ICacheOptions } from '../contract/i-cache.options';
-import { IEntityCacheService } from './i-entity-cache.service';
+import { IEntityCacheService } from '../common/i-entity-cache.service';
 import { Subject, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as moment from 'moment';
-import { ICacheLogger } from './i-cache-logger';
+import { ICacheLogger } from '../common/i-cache-logger';
 import { MultipleDoneByCategory } from '../tests/multiple-done-by-category';
 import { NgZone } from '@angular/core';
 
@@ -15,13 +15,13 @@ interface IMap<TEntity> {
 }
 
 describe('EntityCacheService', () => {
-  interface TestEntity {
+  interface ITestEntity {
     id: number;
     name: string;
     value: string;
   }
 
-  const testDatabase: IMap<TestEntity> = {
+  const testDatabase: IMap<ITestEntity> = {
     33: {
       id: 33,
       name: '33',
@@ -51,10 +51,10 @@ describe('EntityCacheService', () => {
 
   let logger: jasmine.SpyObj<ICacheLogger>;
   let cacheService: CacheService;
-  let entityCacheService: IEntityCacheService<TestEntity>;
+  let entityCacheService: IEntityCacheService<ITestEntity>;
 
   function createEntityCacheService(option?: ICacheOptions): void {
-    entityCacheService = cacheService.for<TestEntity>('TestEntity', option);
+    entityCacheService = cacheService.for<ITestEntity>('TestEntity', option);
   }
 
   beforeEach(() => {
@@ -63,7 +63,7 @@ describe('EntityCacheService', () => {
   });
 
   describe('getLazy', () => {
-    const lazyTestCases: Array<{ data1: TestEntity, data2: TestEntity, result: TestEntity, result1?: TestEntity }> = [
+    const lazyTestCases: Array<{ data1: ITestEntity, data2: ITestEntity, result: ITestEntity, result1?: ITestEntity }> = [
       {
         data1: { id: 3, name: 'qqq', value: 'gg' },
         data2: { id: 3, name: 'qqqq1', value: 'gg3333' },
@@ -85,18 +85,18 @@ describe('EntityCacheService', () => {
       it(`should get '${JSON.stringify(testCase.result)}' if request response '${JSON.stringify(testCase.data1)}' is completed`, () => {
         createEntityCacheService({ cacheMaxAge: moment.duration(1, 'year') });
 
-        const getData1$: Subject<TestEntity> = new Subject<TestEntity>();
-        const data1: TestEntity = testCase.data1;
-        let result1: TestEntity;
+        const getData1$: Subject<ITestEntity> = new Subject<ITestEntity>();
+        const data1: ITestEntity = testCase.data1;
+        let result1: ITestEntity;
 
         const obs1$ = getData1$.pipe(entityCacheService.useCache(null));
         obs1$.subscribe(r => result1 = r);
         getData1$.next(data1);
         expect(result1).toEqual(testCase.hasOwnProperty('result1') ? testCase.result1 : testCase.result);
 
-        const getData2$: Subject<TestEntity> = new Subject<TestEntity>();
-        const data2: TestEntity = testCase.data2;
-        let result2: TestEntity;
+        const getData2$: Subject<ITestEntity> = new Subject<ITestEntity>();
+        const data2: ITestEntity = testCase.data2;
+        let result2: ITestEntity;
 
         const obs2$ = getData2$.pipe(entityCacheService.useCache(null));
         expect(obs1$).not.toBe(obs2$);
@@ -109,20 +109,20 @@ describe('EntityCacheService', () => {
   });
 
   describe('getLazyMap', () => {
-    function createGetData(getNext$: Observable<void>): (ids: number[]) => Observable<IMap<TestEntity>> {
+    function createGetData(getNext$: Observable<void>): (ids: number[]) => Observable<IMap<ITestEntity>> {
       return ids => getNext$.pipe(map(() => ids.reduce(
         (agg, id) => { agg[id] = { ...testDatabase[id] }; return agg; },
-        {} as IMap<TestEntity>
+        {} as IMap<ITestEntity>
       )));
     }
 
     const lazyTestCases: Array<{
       ids1: number[],
       ids2: number[],
-      data1: IMap<TestEntity>,
+      data1: IMap<ITestEntity>,
 
       shouldBeSameRequests: boolean,
-      data2: IMap<TestEntity>,
+      data2: IMap<ITestEntity>,
       requestParameters2: number[] | null
     }> = [
         {
@@ -155,12 +155,12 @@ describe('EntityCacheService', () => {
 
         createEntityCacheService({ cacheMaxAge: moment.duration(1, 'year') });
 
-        let result1: IMap<TestEntity>;
+        let result1: IMap<ITestEntity>;
         const obs1$ = entityCacheService.getMap(ids => getData1(ids), testCase.ids1);
         obs1$.subscribe(r => result1 = r);
         returnData1$.next();
 
-        let result2: IMap<TestEntity>;
+        let result2: IMap<ITestEntity>;
         const obs2$ = entityCacheService.getMap(ids => getData2(ids), testCase.ids2);
         obs2$.subscribe(r => result2 = r);
         returnData2$.next();
@@ -195,11 +195,11 @@ describe('EntityCacheService', () => {
 
         createEntityCacheService({ cacheMaxAge: moment.duration(1, 'year') });
 
-        let result1: IMap<TestEntity>;
+        let result1: IMap<ITestEntity>;
         const obs1$ = entityCacheService.getMap(ids => getData1(ids), testCase.ids1);
         obs1$.subscribe(r => result1 = r);
 
-        let result2: IMap<TestEntity>;
+        let result2: IMap<ITestEntity>;
         const obs2$ = entityCacheService.getMap(ids => getData2(ids), testCase.ids2);
         obs2$.subscribe(r => result2 = r);
         returnData2$.next();
@@ -583,6 +583,234 @@ describe('EntityCacheService', () => {
       });
 
       multipleDone.done('completed');
+    });
+  });
+
+  describe('AggregatedCacheInfoAccessor', () => {
+    interface IUserTestEntity {
+      id: number;
+      name: string;
+    }
+
+    interface IUserWithMetadata {
+      user: IUserTestEntity;
+      metadata: ITestEntity;
+    }
+
+    describe('preload', () => {
+      let userCache: IEntityCacheService<IUserTestEntity>;
+      let userMetadataCache: IEntityCacheService<ITestEntity>;
+      let userWithMetadataCache: IEntityCacheService<IUserWithMetadata>;
+
+      beforeEach(() => {
+        userCache = cacheService.for<IUserTestEntity>('user', { preloadMaxAge: moment.duration(1, 'weeks') });
+        userMetadataCache = cacheService.for<ITestEntity>('userMetadata', { preloadMaxAge: moment.duration(1, 'weeks') });
+
+        userWithMetadataCache = cacheService.aggregated('userWithMetadata', { user: userCache, metadata: userMetadataCache });
+      });
+
+      it('should preload data from few sources', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 1, metadata: 1, userWithMetadata: 2, completed: 1 });
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(() => multipleDone.done('metadata'));
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(result => {
+          multipleDone.done('userWithMetadata', [
+            r => expect(r).toEqual({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }),
+            r => expect(r).toEqual({ user: { id: 1, name: 'Ykstos' }, metadata: { id: 1, name: 'QA', value: 'Senior' } }),
+          ], result);
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should preload map data from few sources', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 2, metadata: 2, userWithMetadata: 2, completed: 1 });
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 2, name: 'Sirob' }).pipe(userCache.useCache(2, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(() => multipleDone.done('metadata'));
+        of({ id: 2, name: 'BA', value: 'Middle' }).pipe(userMetadataCache.useCache(2, true)).subscribe(() => multipleDone.done('metadata'));
+
+        of({
+          '1': { user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } },
+          '2': { user: { id: 2, name: 'S' }, metadata: { id: 2, name: 'BA1', value: 'Lead' } }
+        }).pipe(
+          userWithMetadataCache.useMapCache([1, 2], true)
+        ).subscribe(result => {
+          multipleDone.done('userWithMetadata', [
+            r => expect(r).toEqual({
+              '1': { user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } },
+              '2': { user: { id: 2, name: 'S' }, metadata: { id: 2, name: 'BA1', value: 'Lead' } }
+            }),
+            r => expect(r).toEqual({
+              '1': { user: { id: 1, name: 'Ykstos' }, metadata: { id: 1, name: 'QA', value: 'Senior' } },
+              '2': { user: { id: 2, name: 'Sirob' }, metadata: { id: 2, name: 'BA', value: 'Middle' } }
+            }),
+          ], result);
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should not preload map data from few sources if one is missing', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 2, metadata: 1, userWithMetadata: 1, completed: 1 });
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 2, name: 'Sirob' }).pipe(userCache.useCache(2, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(() => multipleDone.done('metadata'));
+
+        of({
+          '1': { user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } },
+          '2': { user: { id: 2, name: 'S' }, metadata: { id: 2, name: 'BA1', value: 'Lead' } }
+        }).pipe(
+          userWithMetadataCache.useMapCache([1, 2], true)
+        ).subscribe(result => {
+          expect(result).toEqual({
+            '1': { user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } },
+            '2': { user: { id: 2, name: 'S' }, metadata: { id: 2, name: 'BA1', value: 'Lead' } }
+          });
+          multipleDone.done('userWithMetadata');
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should store data for resources', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 2, metadata: 2, userWithMetadata: 1, completed: 1 });
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(() => multipleDone.done('userWithMetadata'));
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(result => {
+          multipleDone.done('user', [
+            r => expect(r).toEqual({ id: 1, name: 'Ykstos' }),
+            r => expect(r).toEqual({ id: 1, name: 'Y' }),
+          ], result);
+        });
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(result => {
+          multipleDone.done('metadata', [
+            r => expect(r).toEqual({ id: 1, name: 'QA', value: 'Senior' }),
+            r => expect(r).toEqual({ id: 1, name: 'QA1', value: 'Junior' }),
+          ], result);
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should request again if some of the data is missing', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 1, metadata: 2, userWithMetadata: 1, completed: 1 });
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(() => multipleDone.done('user'));
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(result => {
+          multipleDone.done('userWithMetadata', [
+            r => expect(r).toEqual({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }),
+          ], result);
+        });
+
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(result => {
+          multipleDone.done('metadata', [
+            r => expect(r).toEqual({ id: 1, name: 'QA', value: 'Senior' }),
+            r => expect(r).toEqual({ id: 1, name: 'QA1', value: 'Junior' }),
+          ], result);
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should remove cache', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 1, metadata: 1, userWithMetadata: 1, completed: 1 });
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(() => multipleDone.done('metadata'));
+
+        userWithMetadataCache.remove(1);
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(result => {
+            expect(result).toEqual({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }),
+            multipleDone.done('userWithMetadata');
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should remove cache for few resources', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 1, metadata: 1, userWithMetadata: 1, completed: 1 });
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(() => multipleDone.done('userWithMetadata'));
+
+        userWithMetadataCache.remove(1);
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(result => {
+           expect(result).toEqual({ id: 1, name: 'Ykstos' }),
+           multipleDone.done('user');
+        });
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(result => {
+            expect(result).toEqual({ id: 1, name: 'QA', value: 'Senior' }),
+            multipleDone.done('metadata');
+        });
+
+        multipleDone.done('completed');
+      });
+    });
+
+    describe('cache', () => {
+      let userCache: IEntityCacheService<IUserTestEntity>;
+      let userMetadataCache: IEntityCacheService<ITestEntity>;
+      let userWithMetadataCache: IEntityCacheService<IUserWithMetadata>;
+
+      beforeEach(() => {
+        userCache = cacheService.for<IUserTestEntity>('user', { cacheMaxAge: moment.duration(1, 'weeks') });
+        userMetadataCache = cacheService.for<ITestEntity>('userMetadata', { cacheMaxAge: moment.duration(1, 'weeks') });
+
+        userWithMetadataCache = cacheService.aggregated('userWithMetadata', { user: userCache, metadata: userMetadataCache });
+      });
+
+      it('should get data from few sources', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 1, metadata: 1, userWithMetadata: 1, completed: 1 });
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(() => multipleDone.done('user'));
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(() => multipleDone.done('metadata'));
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(result => {
+          expect(result).toEqual({ user: { id: 1, name: 'Ykstos' }, metadata: { id: 1, name: 'QA', value: 'Senior' } });
+          multipleDone.done('userWithMetadata');
+        });
+
+        multipleDone.done('completed');
+      });
+
+      it('should store data for resources', (done: DoneFn) => {
+        const multipleDone = new MultipleDoneByCategory(done, { user: 1, metadata: 1, userWithMetadata: 1, completed: 1 });
+
+        of({ user: { id: 1, name: 'Y' }, metadata: { id: 1, name: 'QA1', value: 'Junior' } }).pipe(
+          userWithMetadataCache.useCache(1, true)
+        ).subscribe(result => multipleDone.done('userWithMetadata'));
+
+        of({ id: 1, name: 'Ykstos' }).pipe(userCache.useCache(1, true)).subscribe(result => {
+          expect(result).toEqual({ id: 1, name: 'Y' });
+          multipleDone.done('user');
+        });
+        of({ id: 1, name: 'QA', value: 'Senior' }).pipe(userMetadataCache.useCache(1, true)).subscribe(result => {
+          expect(result).toEqual({ id: 1, name: 'QA1', value: 'Junior' });
+          multipleDone.done('metadata');
+        });
+
+        multipleDone.done('completed');
+      });
     });
   });
 });

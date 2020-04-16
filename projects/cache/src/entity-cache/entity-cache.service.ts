@@ -2,26 +2,28 @@ import { of, concat, MonoTypeOperatorFunction, Observable } from 'rxjs';
 import { map, distinctUntilChanged, tap } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { ICacheOptions } from '../contract/i-cache.options';
-import { IEntityCacheService } from './i-entity-cache.service';
+import { IEntityCacheService } from '../common/i-entity-cache.service';
 import { INgCacheOptions } from '../contract/i-ng-cache-options';
-import { ICacheService } from '../contract/i-cache.service';
 import { ICacheValueInfo } from '../contract/i-cache-value-info';
+import { ICacheInfoAccessor } from './I-cache-info.accessor';
 
 export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity> {
   private readonly defaultOptionsKeys: string[];
   private readonly defaultOptions: INgCacheOptions;
   private readonly prefix: string;
+  private readonly getKeyDelegate: (id: any | null) => string;
 
   private retrive: (entity: TEntity) => TEntity;
 
   constructor(
-    private readonly ngCacheService: ICacheService,
+    private readonly cacheInfoAccessor: ICacheInfoAccessor,
     cachePrefix: string,
     options?: ICacheOptions
   ) {
     this.prefix = `.${cachePrefix}`;
     this.defaultOptions = this.enrichDefaultOptions(this.convertNgOptions(options));
     this.defaultOptionsKeys = Object.keys(this.defaultOptions);
+    this.getKeyDelegate = this.getKey.bind(this);
   }
 
   public areOptionsSame(options: ICacheOptions): boolean {
@@ -34,29 +36,22 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
     return this;
   }
 
-  public useCache<TId>(id: TId, preload: boolean = true): MonoTypeOperatorFunction<TEntity> {
+  public useCache<TId>(entityId: TId, preload: boolean = true, formatId?: (id: TId) => string): MonoTypeOperatorFunction<TEntity> {
+    const getKey = formatId ? (id: TId) => this.getKeyDelegate(formatId(id)) : this.getKeyDelegate;
+
     return obs$ => {
-      const key = this.getKey(id);
       let info: ICacheValueInfo<TEntity> = null;
 
-      if (this.defaultOptions.cacheExpires || this.defaultOptions.cacheMaxAge) {
-        info = this.ngCacheService.getCacheValueInfo<TEntity>(key, this.retrive);
-      }
+      info = this.cacheInfoAccessor.getCacheValueInfo<TEntity>(entityId, getKey, this.retrive);
 
       if (info && info.validForCache) {
         return of(info.value);
       }
 
-      let result$ = obs$.pipe(tap(value => this.ngCacheService.set(key, value, this.defaultOptions)));
+      let result$ = obs$.pipe(tap(value => this.cacheInfoAccessor.set(entityId, getKey, value, this.defaultOptions)));
 
-      if (preload) {
-        if (!info) {
-          info = this.ngCacheService.getCacheValueInfo<TEntity>(key, this.retrive);
-        }
-
-        if (info && info.validForPreload) {
-          result$ = concat(of(info.value), result$).pipe(distinctUntilChanged((oldValue, newValue) => _.isEqual(oldValue, newValue)));
-        }
+      if (preload && info && info.validForPreload) {
+        result$ = concat(of(info.value), result$).pipe(distinctUntilChanged((oldValue, newValue) => _.isEqual(oldValue, newValue)));
       }
 
       return result$;
@@ -64,11 +59,10 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   }
 
   public useMapCache(ids: (string | number)[], preload?: boolean, formatId?: (id: (string | number)) => string): MonoTypeOperatorFunction<{ [id: string]: TEntity }> {
-    const getKey = formatId ? (id: string | number) => this.getKey(formatId(id)) : null;
+    const getKey = formatId ? (id: string | number) => this.getKeyDelegate(formatId(id)) : this.getKeyDelegate;
 
     return obs$ => {
-      const idKeys = ids.reduce((agg, id) => { agg[id] = getKey ? getKey(id) : this.getKey(id); return agg; }, {} as { [id: string]: string });
-      const cacheInfo: { [id: string]: ICacheValueInfo<TEntity> } = this.getMapCacheInfo(ids, idKeys);
+      const cacheInfo: { [id: string]: ICacheValueInfo<TEntity> } = this.getMapCacheInfo(ids, getKey);
 
       if (this.defaultOptions.cacheExpires || this.defaultOptions.cacheMaxAge) {
         if (ids.every(id => cacheInfo[id] && cacheInfo[id].validForCache)) {
@@ -78,7 +72,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
 
       obs$ = obs$.pipe(tap(m => {
         for (const id of Object.keys(m)) {
-          this.ngCacheService.set(getKey ? getKey(id) : this.getKey(id), m[id], this.defaultOptions);
+          this.cacheInfoAccessor.set(id, getKey, m[id], this.defaultOptions);
         }
       }));
 
@@ -95,13 +89,12 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   public getMap(makeRequest$: (ids: string[]) => Observable<{ [id: string]: TEntity }>, ids: string[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
   public getMap(makeRequest$: (ids: number[]) => Observable<{ [id: string]: TEntity }>, ids: number[], preload?: boolean): Observable<{ [id: string]: TEntity }>;
   public getMap(makeRequest$: (ids: any[]) => Observable<{ [id: string]: TEntity }>, ids: any[], preload?: boolean): Observable<{ [id: string]: TEntity }> {
-    const idKeys = ids.reduce((agg, id) => { agg[id] = this.getKey(id); return agg; }, {} as { [id: string]: string });
     let requestIds: (string | number)[] = ids;
     let existingIds: (string | number)[] = null;
 
     let cacheInfo: { [id: string]: ICacheValueInfo<TEntity> } = null;
     if (this.defaultOptions.cacheExpires || this.defaultOptions.cacheMaxAge) {
-      cacheInfo = this.getMapCacheInfo(ids, idKeys);
+      cacheInfo = this.getMapCacheInfo(ids, this.getKeyDelegate);
 
       existingIds = ids.filter(id => cacheInfo[id] && cacheInfo[id].validForCache);
 
@@ -118,7 +111,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
 
     let result$ = makeRequest$(requestIds).pipe(tap(m => {
       for (const id of Object.keys(m)) {
-        this.ngCacheService.set(this.getKey(id), m[id], this.defaultOptions);
+        this.cacheInfoAccessor.set(id, this.getKeyDelegate, m[id], this.defaultOptions);
       }
     }));
 
@@ -134,7 +127,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
 
     if (preload) {
       if (!cacheInfo) {
-        cacheInfo = this.getMapCacheInfo(ids, idKeys);
+        cacheInfo = this.getMapCacheInfo(ids, this.getKeyDelegate);
       }
 
       if (cacheInfo && ids.every(id => cacheInfo[id] && cacheInfo[id].validForPreload)) {
@@ -146,7 +139,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   }
 
   public getInfo<TId>(idParam: TId): ICacheValueInfo<TEntity> {
-    return this.ngCacheService.getCacheValueInfo(this.getKey(idParam));
+    return this.cacheInfoAccessor.getCacheValueInfo(idParam, this.getKeyDelegate, this.retrive);
   }
 
   public get<TId>(idParam: TId): TEntity {
@@ -158,7 +151,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   public set<TId>(idParam: TId, valueParam: TEntity, options?: ICacheOptions) {
     const ngOptions = this.mergeNgOptions(options);
 
-    this.ngCacheService.set(this.getKey(idParam), valueParam, ngOptions);
+    this.cacheInfoAccessor.set(idParam, this.getKeyDelegate, valueParam, ngOptions);
   }
 
   public update<TId>(idParam: TId, update: (data: TEntity) => void, options?: ICacheOptions): void {
@@ -174,17 +167,17 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   }
 
   public remove<TId>(idParam: TId): void {
-    this.ngCacheService.remove(this.getKey(idParam));
+    this.cacheInfoAccessor.remove(idParam, this.getKeyDelegate);
   }
 
   public setOperator<TId>(id: TId, value?: TEntity, options?: ICacheOptions): MonoTypeOperatorFunction<any> {
     return $obs => $obs.pipe(map(v => { this.set<TId>(id, value !== undefined ? value : v, options); return v; }));
   }
 
-  private getMapCacheInfo(ids: (string | number)[], idKeys: { [id: string]: string }): { [id: string]: ICacheValueInfo<TEntity> } {
+  private getMapCacheInfo(ids: (string | number)[], getKey: (id: (string | number)) => string): { [id: string]: ICacheValueInfo<TEntity> } {
     return ids.reduce(
       (agg, id) => {
-        const cachedValue = this.ngCacheService.getCacheValueInfo<TEntity>(idKeys[id], this.retrive);
+        const cachedValue = this.cacheInfoAccessor.getCacheValueInfo<TEntity>(id, getKey, this.retrive);
         if (cachedValue) {
           agg[id] = cachedValue;
         }
@@ -241,7 +234,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
     return defaultOptions;
   }
 
-  private getKey(id: any | null) {
+  private getKey(id: any | null): string {
     if (id === null) {
       return this.prefix;
     }

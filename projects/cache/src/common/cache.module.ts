@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CacheService } from './cache.service';
+import { CacheService } from '../entity-cache/cache.service';
 import { NgCacheService } from './ng-cache.service';
 
 @NgModule({

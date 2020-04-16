@@ -8666,6 +8666,11 @@ tslib@^1.10.0, tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.11.0.tgz#f1f3528301621a53220d58373ae510ff747a66bc"
   integrity sha512-BmndXUtiTn/VDDrJzQE7Mm22Ix3PxgLltW9bSNLoeCY31gnG2OPx0QqJnuc9oMIKioYrz487i6K9o4Pdn0j+Kg==
 
+tslint-no-focused-test@0.5.0:
+  version "0.5.0"
+  resolved "https://base.luware.com/Internal/_packaging/Nimbus/npm/registry/tslint-no-focused-test/-/tslint-no-focused-test-0.5.0.tgz#e0a93ef3fa64bd91c7e7437d1f183204880a8ed5"
+  integrity sha512-YK0PSY5XAdJaTzVIXxnUGyvB5VAi+H9yTc3e40YVtu8Ix3+zLSz4ufvX6rXT3nWpim0DR6fxXoL/Zk8JI641Vg==
+
 tslint@5.20.1:
   version "5.20.1"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-5.20.1.tgz#e401e8aeda0152bc44dd07e614034f3f80c67b7d"

@@ -5,7 +5,7 @@ import { ICacheOptions } from '../contract/i-cache.options';
 import { IEntityCacheService } from '../common/i-entity-cache.service';
 import { INgCacheOptions } from '../contract/i-ng-cache-options';
 import { ICacheValueInfo } from '../contract/i-cache-value-info';
-import { ICacheInfoAccessor } from './I-cache-info.accessor';
+import { ICacheInfoAccessor } from './i-cache-info.accessor';
 
 export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity> {
   private readonly defaultOptionsKeys: string[];

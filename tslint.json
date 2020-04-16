@@ -1,5 +1,5 @@
 {
-  "rulesDirectory": ["node_modules/codelyzer"],
+  "rulesDirectory": ["node_modules/codelyzer", "tslint-no-focused-test"],
   "rules": {
     "arrow-return-shorthand": true,
     "callable-types": true,
@@ -28,6 +28,7 @@
     "no-arg": true,
     "no-bitwise": true,
     "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
+    "no-focused-test": true,
     "no-construct": true,
     "no-debugger": true,
     "no-duplicate-super": true,

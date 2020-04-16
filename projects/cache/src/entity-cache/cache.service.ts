@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { EntityCacheService } from './entity-cache.service';
 import { IEntityCacheService } from '../common/i-entity-cache.service';
 import { ICacheOptions } from '../contract/i-cache.options';
@@ -6,17 +6,18 @@ import { ICacheService } from '../contract/i-cache.service';
 import { NgCacheInfoAccessor } from './ng-cache-info.accessor';
 import { IAggregatedCacheMapping } from './i-aggregated-cache.mapping';
 import { AggregatedCacheInfoAccessor } from './aggregated-cache-info.accessor';
+import { NgCacheService } from '../common/ng-cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class CacheService {
-  private readonly defaultCacheInfoAccessor: NgCacheInfoAccessor;
+  private readonly defaultCacheInfoAccessor: NgCacheInfoAccessor<any>;
   private readonly entityCaches: { [entityName: string]: IEntityCacheService<any> };
   private readonly aggregatedCaches: { [aggregateName: string]: IEntityCacheService<any> };
 
   constructor(
-    private readonly ngCacheService: ICacheService
+    @Inject(NgCacheService) private readonly ngCacheService: ICacheService
   ) {
-    this.defaultCacheInfoAccessor = new NgCacheInfoAccessor(ngCacheService);
+    this.defaultCacheInfoAccessor = new NgCacheInfoAccessor<any>(ngCacheService);
     this.entityCaches = {};
     this.aggregatedCaches = {};
   }
@@ -38,7 +39,7 @@ export class CacheService {
     let existingCache = this.aggregatedCaches[aggregateName] as IEntityCacheService<TAggregate>;
 
     if (!existingCache) {
-      existingCache = this.aggregatedCaches[aggregateName] = new EntityCacheService<TAggregate>(new AggregatedCacheInfoAccessor(cacheMapping), aggregateName);
+      existingCache = this.aggregatedCaches[aggregateName] = new EntityCacheService<TAggregate>(new AggregatedCacheInfoAccessor<TAggregate>(cacheMapping), aggregateName);
     }
 
     return existingCache;

@@ -4,13 +4,13 @@ import { INgCacheOptions } from '../contract/i-ng-cache-options';
 import { IAggregatedCacheMapping } from './i-aggregated-cache.mapping';
 import { IEntityCacheService } from '../common/i-entity-cache.service';
 
-export class AggregatedCacheInfoAccessor<TAggregate> implements ICacheInfoAccessor {
+export class AggregatedCacheInfoAccessor<TAggregate> implements ICacheInfoAccessor<TAggregate> {
     constructor(
         private readonly mapping: IAggregatedCacheMapping<TAggregate>,
     ) {
 
     }
-    public getCacheValueInfo<TEntity>(id: any, getKey: (id: any) => string, retrive: (entity: TEntity) => TEntity): ICacheValueInfo<TEntity> {
+    public getCacheValueInfo(id: any, getKey: (id: any) => string, retrive: (entity: TAggregate) => TAggregate): ICacheValueInfo<TAggregate> {
         const result = {} as TAggregate;
         let validForCache: boolean = true;
         let validForPreload: boolean = true;
@@ -30,10 +30,10 @@ export class AggregatedCacheInfoAccessor<TAggregate> implements ICacheInfoAccess
             validForPreload = validForPreload && cacheProperty.validForPreload;
         }
 
-        return { value: result as any as TEntity, validForCache: validForCache, validForPreload: validForPreload };
+        return { value: retrive ? retrive(result) : result, validForCache: validForCache, validForPreload: validForPreload };
     }
 
-    public set<TEntity>(id: any, getKey: (id: any) => string, value: TEntity, options: INgCacheOptions): void {
+    public set(id: any, getKey: (id: any) => string, value: TAggregate, options: INgCacheOptions): void {
         const aggregate = value as any as TAggregate;
 
         const properties = Object.keys(this.mapping) as Array<keyof TAggregate>;

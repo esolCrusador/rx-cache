@@ -16,7 +16,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   private retrive: (entity: TEntity) => TEntity;
 
   constructor(
-    private readonly cacheInfoAccessor: ICacheInfoAccessor,
+    private readonly cacheInfoAccessor: ICacheInfoAccessor<TEntity>,
     cachePrefix: string,
     options?: ICacheOptions
   ) {
@@ -42,7 +42,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
     return obs$ => {
       let info: ICacheValueInfo<TEntity> = null;
 
-      info = this.cacheInfoAccessor.getCacheValueInfo<TEntity>(entityId, getKey, this.retrive);
+      info = this.cacheInfoAccessor.getCacheValueInfo(entityId, getKey, this.retrive);
 
       if (info && info.validForCache) {
         return of(info.value);
@@ -177,7 +177,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   private getMapCacheInfo(ids: (string | number)[], getKey: (id: (string | number)) => string): { [id: string]: ICacheValueInfo<TEntity> } {
     return ids.reduce(
       (agg, id) => {
-        const cachedValue = this.cacheInfoAccessor.getCacheValueInfo<TEntity>(id, getKey, this.retrive);
+        const cachedValue = this.cacheInfoAccessor.getCacheValueInfo(id, getKey, this.retrive);
         if (cachedValue) {
           agg[id] = cachedValue;
         }

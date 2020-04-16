@@ -774,7 +774,7 @@ describe('EntityCacheService', () => {
         userCache = cacheService.for<IUserTestEntity>('user', { cacheMaxAge: moment.duration(1, 'weeks') });
         userMetadataCache = cacheService.for<ITestEntity>('userMetadata', { cacheMaxAge: moment.duration(1, 'weeks') });
 
-        userWithMetadataCache = cacheService.aggregated('userWithMetadata', { user: userCache, metadata: userMetadataCache });
+        userWithMetadataCache = cacheService.aggregated<IUserWithMetadata>('userWithMetadata', { user: userCache, metadata: userMetadataCache });
       });
 
       it('should get data from few sources', (done: DoneFn) => {

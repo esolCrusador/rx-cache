@@ -1,8 +1,8 @@
 import { CacheStorageAbstract } from '../cache-storage-abstract.service';
 import { CacheStoragesEnum } from '../../../contract/cache-storages.enum';
-import * as _ from 'lodash';
 import { IStorageValue } from '../../../contract/i-storage-value';
 import { OnDestroy, NgZone } from '@angular/core';
+import { cloneDeep, isEqual } from 'lodash-es';
 
 /**
  * Service for storing data in hybrid storage (primarly in memory and uses persistent localStorage as backup)
@@ -44,7 +44,7 @@ export class CacheHybridStorage extends CacheStorageAbstract implements OnDestro
       return 1;
     }
 
-    if (_.isEqual(existing, value)) {
+    if (isEqual(existing, value)) {
       return 1;
     }
 
@@ -55,7 +55,7 @@ export class CacheHybridStorage extends CacheStorageAbstract implements OnDestro
 
         const existingStorageValue: IStorageValue<any> = existing as any as IStorageValue<any>;
         if (// Value is the same and timeout has changed less than timeoutValuebleDifference (10% by default).
-          _.isEqual(existingStorageValue.value, storageValue.value)
+          isEqual(existingStorageValue.value, storageValue.value)
           && this.getRaltiveExpirationDifference(existingStorageValue.options.cacheExpires, storageValue.options.cacheExpires, time) < this.timeoutValuebleDifference
           && this.getRaltiveExpirationDifference(existingStorageValue.options.preloadExpires, storageValue.options.preloadExpires, time) < this.timeoutValuebleDifference
         ) {
@@ -100,7 +100,7 @@ export class CacheHybridStorage extends CacheStorageAbstract implements OnDestro
       return;
     }
 
-    const data = _.cloneDeep(this.data);
+    const data = cloneDeep(this.data);
     this.cleanUpPersistentStorage();
 
     if (this.changedKeys.length > 0) {
@@ -113,7 +113,7 @@ export class CacheHybridStorage extends CacheStorageAbstract implements OnDestro
   }
 
   private cleanUpPersistentStorage() {
-    const removedItems = _.cloneDeep(this.removedItems);
+    const removedItems = cloneDeep(this.removedItems);
     this.removedItems = [];
     for (const ri of removedItems) {
       this.persistentStorage.removeItem(ri);

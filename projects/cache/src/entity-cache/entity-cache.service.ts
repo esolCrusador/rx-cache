@@ -1,11 +1,11 @@
 import { of, concat, MonoTypeOperatorFunction, Observable } from 'rxjs';
 import { map, distinctUntilChanged, tap } from 'rxjs/operators';
-import * as _ from 'lodash';
 import { ICacheOptions } from '../contract/i-cache.options';
 import { IEntityCacheService } from '../common/i-entity-cache.service';
 import { INgCacheOptions } from '../contract/i-ng-cache-options';
 import { ICacheValueInfo } from '../contract/i-cache-value-info';
 import { ICacheInfoAccessor } from './i-cache-info.accessor';
+import { isEqual } from 'lodash-es';
 
 export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity> {
   private readonly defaultOptionsKeys: string[];
@@ -27,7 +27,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
   }
 
   public areOptionsSame(options: ICacheOptions): boolean {
-    return _.isEqual(this.enrichDefaultOptions(this.convertNgOptions(options)), this.defaultOptions);
+    return isEqual(this.enrichDefaultOptions(this.convertNgOptions(options)), this.defaultOptions);
   }
 
   public setRetriveMethod(retrive: (entity: TEntity) => TEntity): IEntityCacheService<TEntity> {
@@ -51,7 +51,7 @@ export class EntityCacheService<TEntity> implements IEntityCacheService<TEntity>
       let result$ = obs$.pipe(tap(value => this.cacheInfoAccessor.set(entityId, getKey, value, this.defaultOptions)));
 
       if (preload && info && info.validForPreload) {
-        result$ = concat(of(info.value), result$).pipe(distinctUntilChanged((oldValue, newValue) => _.isEqual(oldValue, newValue)));
+        result$ = concat(of(info.value), result$).pipe(distinctUntilChanged((oldValue, newValue) => isEqual(oldValue, newValue)));
       }
 
       return result$;

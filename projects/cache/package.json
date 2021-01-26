@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@angular/common": "8.2.6",
     "@angular/core": "8.2.6",
-    "lodash": "4.17.15",
+    "lodash-es": "4.17.20",
     "moment": "2.24.0"
   }
 }

@@ -1,4 +1,5 @@
-# Luware.UI.Cache - Angular library project
+# rx-cache
+Cache which can be used with simple pipe(entityCache.useCache()) operator
 
 ## Initiate dev environment
 
